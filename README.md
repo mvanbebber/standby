@@ -1,7 +1,7 @@
-# Holy Sheet!: sheet music for the stage
+# No Sheet!: sheet music for the stage
 
 A fast, offline PDF music reader for iPad (also works on computers and phones).
-The app was called StandBy at first; the repository, IndexedDB name and cache names still say standby.
+The app was called StandBy, then Holy Sheet!; the repository, IndexedDB name and cache names still say standby.
 
 ## What it does
 - **Library**: add PDFs once (pick several in Files, or drag them in) and they're ready. No second import step.

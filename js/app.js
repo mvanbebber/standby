@@ -9,7 +9,7 @@ import { writeZip, readZip } from './zip.js';
 import * as fsc from './forscore.js';
 
 // Keep in step with VERSION in sw.js (shown in Settings).
-const APP_VERSION = '2026.11.24.8';
+const APP_VERSION = '2026.11.24.9';
 const $ = s => document.querySelector(s);
 const content = $('#content');
 let view = { type: 'all' };
@@ -541,7 +541,7 @@ async function importForScore(file) {
   let kind;
   try { kind = await fsc.sniff(file); } catch { kind = null; }
   if (kind === 'xml') return importXmlSetlist(file);
-  if (kind !== 'container') return ui.toast(`“${file.name}” isn't a forScore file Holy Sheet! can read`, 3500);
+  if (kind !== 'container') return ui.toast(`“${file.name}” isn't a forScore file No Sheet! can read`, 3500);
   let prog = progressSheet('Reading forScore file…');
   let c, d;
   try { c = await fsc.readContainer(file); d = fsc.describe(c.meta, c.records); }
@@ -552,7 +552,7 @@ async function importForScore(file) {
 
   const lines = [];
   if (withPdf.length) lines.push(plural(withPdf.length, 'score') + ' with PDFs');
-  if (matched.length) lines.push(`marks and titles for ${plural(matched.length, 'score')} already in Holy Sheet!`);
+  if (matched.length) lines.push(`marks and titles for ${plural(matched.length, 'score')} already in No Sheet!`);
   if (d.setlists.length) lines.push(plural(d.setlists.length, 'setlist'));
   const libs = d.libraries;
   const noPdfNote = !withPdf.length && /4SBV02/.test(c.kind) ? '<p>This is a forScore <b>Backup</b>, which has no PDFs in it. Titles, setlists and marks are matched to PDFs you already added by file name. For everything in one go, make an <b>Archive</b> in forScore instead.</p>' : '';
@@ -658,7 +658,7 @@ async function importForScore(file) {
 
 async function importXmlSetlist(file) {
   let st;
-  try { st = await fsc.readXmlSetlist(file); } catch { return ui.toast(`“${file.name}” isn't a setlist file Holy Sheet! can read`, 3500); }
+  try { st = await fsc.readXmlSetlist(file); } catch { return ui.toast(`“${file.name}” isn't a setlist file No Sheet! can read`, 3500); }
   const lib = curLib(), items = [], missing = [];
   st.items.forEach(it => { const id = resolveSong(it.path, it.title, lib.id); if (id) items.push(id); else missing.push(it.title || it.path); });
   let sl = S.setlists.find(x => x.libraryId === lib.id && x.name === st.name);
@@ -743,7 +743,7 @@ async function openSettings() {
     <div class="sheet-section">Foot pedals &amp; keyboards</div>
     <p style="margin-top:6px;font-size:14px">Page-turn pedals work out of the box: → ↓ Page Down and Space go forward, ← ↑ Page Up go back.</p>
     <div class="sheet-section">Coming from forScore?</div>
-    <p style="margin-top:6px;font-size:14px">In forScore, open Tools › Backups and make an <b>Archive</b> (it includes your PDFs), then save it to Files. Pick it here: Holy Sheet! brings in your scores, libraries, setlists, notes and handwriting. Shared setlists (.4ss) work too.</p>
+    <p style="margin-top:6px;font-size:14px">In forScore, open Tools › Backups and make an <b>Archive</b> (it includes your PDFs), then save it to Files. Pick it here: No Sheet! brings in your scores, libraries, setlists, notes and handwriting. Shared setlists (.4ss) work too.</p>
     <div class="sheet-actions" style="justify-content:flex-start;margin-top:6px"><button class="btn" id="doForScore">${icon('i-down')}Import from forScore</button></div>
     <div class="sheet-section">Your library</div>
     <p style="margin-top:6px;font-size:14px">${plural(S.scores.size, 'score')}${mb ? ` · ${mb} on this device` : ''} · ${persisted ? 'protected from automatic cleanup' : 'not yet marked as permanent storage'}.
@@ -751,7 +751,7 @@ async function openSettings() {
     <div class="sheet-actions" style="justify-content:flex-start;margin-top:6px">
       <button class="btn" id="doBackup">${icon('i-up')}Back up library</button>
       <button class="btn" id="doRestore">${icon('i-down')}Restore a backup</button></div>
-    <p style="margin-top:18px;font-size:13px">Holy Sheet! version ${APP_VERSION}. Updates install by themselves when you're online.</p>
+    <p style="margin-top:18px;font-size:13px">No Sheet! version ${APP_VERSION}. Updates install by themselves when you're online.</p>
     <div class="sheet-actions"><button class="btn accent" data-x>Done</button></div>`);
   const seg = sh.el.querySelector('#backZone');
   const paintSeg = () => seg.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.v === S.settings.backZone));
@@ -781,12 +781,12 @@ async function makeBackup() {
     if (it.t === 'img' && it.b) { const name = `ink/${m.id}-${pg}-${i}.png`; files.push({ name, data: it.b }); list[i] = { ...it, b: undefined, ref: name }; }
   });
   for (const id of S.scores.keys()) { const f = await db.get('files', id); if (f) files.push({ name: `pdf/${id}.pdf`, data: f.blob }); }
-  const lib = { app: 'Holy Sheet!', version: 1, exportedAt: new Date().toISOString(),
+  const lib = { app: 'No Sheet!', version: 1, exportedAt: new Date().toISOString(),
     scores: [...S.scores.values()].map(({ broken, ...s }) => s), libraries: S.libraries, setlists: S.setlists, marks, settings: S.settings };
   const zip = await writeZip([{ name: 'library.json', data: JSON.stringify(lib) }, ...files]);
   const a = document.createElement('a');
   a.href = URL.createObjectURL(zip);
-  a.download = `Holy Sheet backup ${new Date().toISOString().slice(0, 10)}.zip`;
+  a.download = `No Sheet backup ${new Date().toISOString().slice(0, 10)}.zip`;
   document.body.append(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(a.href), 60000);
   ui.toast('Backup saved (' + (zip.size / 1048576).toFixed(1) + ' MB)', 3000);
@@ -795,7 +795,7 @@ async function makeBackup() {
 async function restoreBackup(file) {
   try {
     const z = await readZip(file);
-    if (!z.has('library.json')) return ui.toast('That zip is not a Holy Sheet! backup');
+    if (!z.has('library.json')) return ui.toast('That zip is not a No Sheet! backup');
     const lib = JSON.parse(await (await z.get('library.json')()).text());
     let added = 0;
     const libs = lib.libraries || (lib.folders || []).map(f => ({ id: f.id, name: f.name, createdAt: Date.now() }));

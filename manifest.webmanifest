@@ -1,6 +1,6 @@
 {
-  "name": "Holy Sheet!",
-  "short_name": "Holy Sheet!",
+  "name": "No Sheet!",
+  "short_name": "No Sheet!",
   "description": "A fast sheet music reader for the stage.",
   "start_url": "./",
   "scope": "./",
