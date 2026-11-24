@@ -4,10 +4,12 @@ import * as R from './render.js';
 import * as ink from './ink.js';
 import { S, load, saveSettings, uid, esc, curLib } from './store.js';
 import * as ui from './ui.js';
-import { openViewer } from './viewer.js';
+import { openViewer, isOpen as isViewerOpen } from './viewer.js';
 import { writeZip, readZip } from './zip.js';
 import * as fsc from './forscore.js';
 
+// Keep in step with VERSION in sw.js (shown in Settings).
+const APP_VERSION = '2026.11.24.4';
 const $ = s => document.querySelector(s);
 const content = $('#content');
 let view = { type: 'all' };
@@ -728,6 +730,7 @@ async function openSettings() {
     <div class="sheet-actions" style="justify-content:flex-start;margin-top:6px">
       <button class="btn" id="doBackup">${icon('i-up')}Back up library</button>
       <button class="btn" id="doRestore">${icon('i-down')}Restore a backup</button></div>
+    <p style="margin-top:18px;font-size:13px">StandBy version ${APP_VERSION}. Updates install by themselves when you're online.</p>
     <div class="sheet-actions"><button class="btn accent" data-x>Done</button></div>`);
   const seg = sh.el.querySelector('#backZone');
   const paintSeg = () => seg.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.v === S.settings.backZone));
@@ -810,6 +813,24 @@ async function restoreBackup(file) {
   } catch (err) { console.error(err); ui.toast('Could not read that backup'); }
 }
 
+// ---------- updates ----------
+// A home-screen app often resumes instead of reloading, so look for a new version whenever it comes back,
+// and reload once one is installed, but never while music is on screen (it waits for the library).
+function setupUpdates() {
+  let updating = false, pending = false;   // updating: a newer version is installing over one already in use
+  navigator.serviceWorker.register('sw.js').then(reg => {
+    reg.addEventListener('updatefound', () => { if (reg.active) updating = true; });
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') reg.update().catch(() => {}); });
+  }).catch(() => {});
+  const reloadWhenFree = () => {
+    if (!isViewerOpen() && !ui.sheetOpen()) location.reload();
+    else pending = true;
+  };
+  navigator.serviceWorker.addEventListener('controllerchange', () => { if (updating) reloadWhenFree(); });
+  window.addEventListener('viewerclosed', () => { if (pending) setTimeout(reloadWhenFree, 300); });
+  document.getElementById('sheetWrap').addEventListener('click', () => { if (pending) setTimeout(reloadWhenFree, 300); });
+}
+
 // ---------- start ----------
 (async function start() {
   await load();
@@ -820,5 +841,5 @@ async function restoreBackup(file) {
   }));
   render();
   for (const id of S.scores.keys()) if (!have.has(id)) queueThumb(id);
-  if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(() => {});
+  if ('serviceWorker' in navigator && location.protocol.startsWith('http')) setupUpdates();
 })();

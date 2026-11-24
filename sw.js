@@ -1,6 +1,6 @@
 // Offline support: every file the app needs is cached on first visit, then served from the cache
 // (instant, and it works with no signal at the venue). Bump VERSION whenever a file changes.
-const VERSION = 'standby-2026.11.24.3';
+const VERSION = 'standby-2026.11.24.4';
 const FILES = [
   './', 'index.html', 'app.css', 'manifest.webmanifest', 'icon.svg', 'icon-192.png', 'icon-512.png', 'apple-touch-icon.png',
   'js/app.js', 'js/db.js', 'js/store.js', 'js/render.js', 'js/ink.js', 'js/ui.js', 'js/viewer.js', 'js/zip.js', 'js/forscore.js',

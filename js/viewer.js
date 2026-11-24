@@ -56,6 +56,7 @@ export function closeViewer(fromHistory) {
   wake(false);
   if (!fromHistory && history.state?.viewer) history.back();
   V.onClose?.();
+  window.dispatchEvent(new Event('viewerclosed'));
 }
 window.addEventListener('popstate', () => { if (V.open) closeViewer(true); });
 
