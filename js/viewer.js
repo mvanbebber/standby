@@ -3,6 +3,7 @@ import * as R from './render.js';
 import * as ink from './ink.js';
 import { S, saveSettings, esc } from './store.js';
 import * as ui from './ui.js';
+import * as db from './db.js';
 
 const $ = s => document.querySelector(s);
 const viewer = $('#viewer'), stage = $('#stage');
@@ -172,7 +173,9 @@ function showHalf(gen, g, d, tgt) {
   updateChrome([V.page], tgt);
 }
 function attachHalf(sl, ec, et, tgt) {
-  const id = sid(), W = ec.cssW, H = ec.cssH, split = Math.round(H / 2);
+  const id = sid(), W = ec.cssW, H = ec.cssH;
+  const sc = score(), page = V.page;
+  let split = Math.round(H * (sc.splits?.[page] ?? 0.5));
   sl.sid = null; sl.page = 0; sl.w = 0; sl.key = 'half';   // no drawing on a split page
   sl.paper.style.width = W + 'px'; sl.paper.style.height = H + 'px';
   const box = (cls, h) => { const b = document.createElement('div'); b.className = 'hw ' + cls; b.style.height = h + 'px'; return b; };
@@ -185,7 +188,33 @@ function attachHalf(sl, ec, et, tgt) {
   const tag = document.createElement('span'); tag.className = 'tag';
   tag.textContent = tgt.id === id ? `Page ${tgt.p} ↑` : `Next: ${S.scores.get(tgt.id).title} ↑`;
   top.append(tag);
-  sl.paper.replaceChildren(top, bot);
+  // The orange line can be dragged; where it sits is remembered for this page of this score.
+  const handle = document.createElement('div');
+  handle.className = 'hsplit'; handle.style.top = split + 'px';
+  handle.innerHTML = '<span>⇕ Drag to move the split</span>';
+  const setSplit = y => {
+    split = Math.round(Math.max(H * 0.12, Math.min(H * 0.88, y)));
+    top.style.height = split + 'px'; bot.style.height = (H - split) + 'px';
+    ec.canvas.style.top = inkB.style.top = -split + 'px';
+    handle.style.top = split + 'px';
+  };
+  handle.addEventListener('pointerdown', e => {
+    e.stopPropagation(); e.preventDefault();
+    handle.setPointerCapture(e.pointerId); handle.classList.add('drag');
+    const y0 = sl.paper.getBoundingClientRect().top;
+    const move = ev => { ev.stopPropagation(); setSplit(ev.clientY - y0); };
+    const end = ev => {
+      ev.stopPropagation();
+      handle.removeEventListener('pointermove', move); handle.removeEventListener('pointerup', end); handle.removeEventListener('pointercancel', end);
+      handle.classList.remove('drag');
+      (sc.splits ||= {})[page] = Math.round(split / H * 1000) / 1000;
+      db.put('scores', sc);
+    };
+    handle.addEventListener('pointermove', move); handle.addEventListener('pointerup', end); handle.addEventListener('pointercancel', end);
+  });
+  handle.addEventListener('pointerup', e => e.stopPropagation());
+  sl.paper.replaceChildren(top, bot, handle);
+  if (!S.settings.splitHint) { S.settings.splitHint = true; saveSettings(); ui.toast('Drag the orange line to move where the page splits', 3500); }
   ink.loadMarks(tgt.id).then(() => ink.drawInk(inkT, tgt.id, tgt.p, et.cssW, et.cssH));
   ink.drawInk(inkB, id, V.page, W, H);
 }

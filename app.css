@@ -245,6 +245,11 @@ svg .fill { fill: currentColor; }
 /* Half-page turn: top = next page's top half, bottom = this page's bottom half */
 .paper .hw { position: absolute; left: 0; right: 0; overflow: hidden; }
 .paper .hw canvas { position: absolute; inset: auto; }
-.paper .hw.top { top: 0; box-shadow: 0 3px 0 var(--accent), 0 6px 10px rgba(0,0,0,.25); z-index: 1; }
+.paper .hw.top { top: 0; box-shadow: 0 6px 10px rgba(0,0,0,.22); z-index: 1; }
+.paper .hsplit { position: absolute; left: 0; right: 0; height: 44px; margin-top: -22px; z-index: 3; touch-action: none; cursor: ns-resize; }
+.paper .hsplit::before { content: ''; position: absolute; left: 0; right: 0; top: 20px; height: 4px; background: var(--accent); }
+.paper .hsplit span { position: absolute; left: 10px; top: 8px; background: var(--accent); color: var(--accent-ink); font-size: 12px; font-weight: 700; padding: 5px 10px; border-radius: 14px; white-space: nowrap; }
+.paper .hsplit.drag::before { height: 6px; top: 19px; }
+
 .paper .hw.bot { bottom: 0; }
-.paper .hw .tag { position: absolute; right: 8px; bottom: 8px; z-index: 2; background: rgba(22,24,28,.85); color: #fff; font-size: 12px; font-weight: 700; padding: 3px 8px; border-radius: 7px; }
+.paper .hw .tag { position: absolute; right: 8px; bottom: 12px; z-index: 2; background: rgba(22,24,28,.85); color: #fff; font-size: 12px; font-weight: 700; padding: 3px 8px; border-radius: 7px; }
