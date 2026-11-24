@@ -234,3 +234,17 @@ svg .fill { fill: currentColor; }
 #dPrev { left: 0; border-radius: 0 12px 12px 0; } #dNext { right: 0; border-radius: 12px 0 0 12px; }
 #viewer.drawing .dturn { display: grid; }
 .srow .info { text-align: left; }
+.lib-row { display: flex; align-items: center; gap: 2px; padding: 0 8px 6px 10px; }
+.lib-switch { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; min-height: 56px; padding: 0 12px; border-radius: 12px; background: var(--panel2); text-align: left; }
+.lib-switch:active { filter: brightness(1.2); }
+.lib-switch > svg:first-child { color: var(--accent); }
+.lib-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.lib-txt small { font-size: 11px; font-weight: 700; letter-spacing: .6px; text-transform: uppercase; color: var(--muted); }
+.lib-txt b { font-size: 17px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lib-switch .chev { transform: rotate(-90deg); width: 18px; height: 18px; color: var(--muted); }
+/* Half-page turn: top = next page's top half, bottom = this page's bottom half */
+.paper .hw { position: absolute; left: 0; right: 0; overflow: hidden; }
+.paper .hw canvas { position: absolute; inset: auto; }
+.paper .hw.top { top: 0; box-shadow: 0 3px 0 var(--accent), 0 6px 10px rgba(0,0,0,.25); z-index: 1; }
+.paper .hw.bot { bottom: 0; }
+.paper .hw .tag { position: absolute; right: 8px; bottom: 8px; z-index: 2; background: rgba(22,24,28,.85); color: #fff; font-size: 12px; font-weight: 700; padding: 3px 8px; border-radius: 7px; }

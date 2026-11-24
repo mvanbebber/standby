@@ -47,6 +47,7 @@
     <symbol id="i-down" viewBox="0 0 24 24"><path d="M12 4v12M7 11l5 5 5-5M5 20h14"/></symbol>
     <symbol id="i-up" viewBox="0 0 24 24"><path d="M12 16V4M7 9l5-5 5 5M5 20h14"/></symbol>
     <symbol id="i-pages" viewBox="0 0 24 24"><rect x="3" y="5" width="8" height="14" rx="1"/><rect x="13" y="5" width="8" height="14" rx="1"/></symbol>
+    <symbol id="i-half" viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="1.5"/><path d="M3 12h18" stroke-dasharray="2.5 2"/><path d="M9 7h6M9 16h6"/></symbol>
     <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
     <symbol id="i-select" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M8.5 12.2l2.4 2.4L15.8 9.7"/></symbol>
   </defs>
@@ -55,13 +56,15 @@
 <div id="app">
   <aside id="side">
     <div class="brand"><img src="icon.svg" alt="" width="28" height="28"><span>StandBy</span></div>
+    <div class="lib-row">
+      <button id="libBtn" class="lib-switch" aria-label="Switch library"><svg><use href="#i-folder"/></svg><span class="lib-txt"><small>Library</small><b id="libName"></b></span><svg class="chev"><use href="#i-back"/></svg></button>
+      <button id="libMore" class="icon-btn" aria-label="Library options"><svg><use href="#i-more"/></svg></button>
+    </div>
     <nav class="side-scroll">
       <button class="nav" data-view="all"><svg><use href="#i-grid"/></svg><span>All scores</span><em id="countAll"></em></button>
       <button class="nav" data-view="recent"><svg><use href="#i-clock"/></svg><span>Recently added</span></button>
       <div class="side-head"><span>Setlists</span><button id="newSetlist" class="mini"><svg><use href="#i-plus"/></svg>New</button></div>
       <div id="setlistNav"></div>
-      <div class="side-head"><span>Folders</span><button id="newFolder" class="mini"><svg><use href="#i-plus"/></svg>New</button></div>
-      <div id="folderNav"></div>
     </nav>
     <div class="side-foot">
       <button class="nav" id="settingsBtn"><svg><use href="#i-gear"/></svg><span>Settings &amp; backup</span></button>
@@ -91,7 +94,7 @@
 <div id="selectBar" hidden>
   <span id="selCount">0 selected</span>
   <button class="btn" data-sel="setlist"><svg><use href="#i-setlist"/></svg>Add to setlist</button>
-  <button class="btn" data-sel="folder"><svg><use href="#i-folder"/></svg>Move to folder</button>
+  <button class="btn" data-sel="library"><svg><use href="#i-folder"/></svg>Move or copy to library</button>
   <button class="btn danger" data-sel="delete"><svg><use href="#i-trash"/></svg>Delete</button>
   <button class="btn ghost" data-sel="cancel">Done</button>
 </div>
@@ -108,6 +111,7 @@
       <button id="vSongs" class="btn ghost"><svg><use href="#i-list"/></svg><span>Songs</span></button>
       <button id="vNight" class="btn ghost toggle"><svg><use href="#i-moon"/></svg><span>Night</span></button>
       <button id="vTwo" class="btn ghost toggle"><svg><use href="#i-pages"/></svg><span>2 pages</span></button>
+      <button id="vHalf" class="btn ghost toggle"><svg><use href="#i-half"/></svg><span>Half turns</span></button>
       <button id="vDraw" class="btn accent"><svg><use href="#i-draw"/></svg><span>Draw</span></button>
     </div>
   </header>
@@ -150,5 +154,6 @@
 <div id="toast" role="status"></div>
 <div id="dropHint" hidden><div>Drop PDFs to add them</div></div>
 <input type="file" id="fileInput" accept="application/pdf,.pdf,.zip,application/zip" multiple hidden>
+<input type="file" id="fsInput" multiple hidden>
 </body>
 </html>

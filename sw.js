@@ -1,9 +1,9 @@
 // Offline support: every file the app needs is cached on first visit, then served from the cache
 // (instant, and it works with no signal at the venue). Bump VERSION whenever a file changes.
-const VERSION = 'standby-2026.11.24';
+const VERSION = 'standby-2026.11.24.2';
 const FILES = [
   './', 'index.html', 'app.css', 'manifest.webmanifest', 'icon.svg', 'icon-192.png', 'icon-512.png', 'apple-touch-icon.png',
-  'js/app.js', 'js/db.js', 'js/store.js', 'js/render.js', 'js/ink.js', 'js/ui.js', 'js/viewer.js', 'js/zip.js',
+  'js/app.js', 'js/db.js', 'js/store.js', 'js/render.js', 'js/ink.js', 'js/ui.js', 'js/viewer.js', 'js/zip.js', 'js/forscore.js',
   'vendor/pdfjs/pdf.min.mjs', 'vendor/pdfjs/pdf.worker.min.mjs',
   ...['FoxitDingbats.pfb', 'FoxitFixed.pfb', 'FoxitFixedBold.pfb', 'FoxitFixedBoldItalic.pfb', 'FoxitFixedItalic.pfb',
     'FoxitSerif.pfb', 'FoxitSerifBold.pfb', 'FoxitSerifBoldItalic.pfb', 'FoxitSerifItalic.pfb', 'FoxitSymbol.pfb',

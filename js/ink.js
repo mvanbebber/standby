@@ -114,12 +114,29 @@ function drawItem(c, it, W, H) {
     strokePath(c, it.p, W, H);
   } else if (it.t === 'st') {
     const st = STAMPS[it.k]; if (st) { c.translate(it.x * W, it.y * H); const s = it.s * W / 100; c.scale(s, s); st.draw(c); }
+  } else if (it.t === 'tx' && it.a === 'l') {   // imported note: top-left anchored, several lines
+    c.font = `500 ${it.s * W}px -apple-system, system-ui, sans-serif`;
+    c.textAlign = 'left'; c.textBaseline = 'top';
+    it.v.split('\n').forEach((ln, i) => c.fillText(ln, it.x * W, it.y * H + i * it.s * W * 1.2));
   } else if (it.t === 'tx') {
     c.font = `600 ${it.s * W}px -apple-system, system-ui, sans-serif`;
     c.textAlign = 'center'; c.textBaseline = 'middle';
     c.fillText(it.v, it.x * W, it.y * H);
+  } else if (it.t === 'img') {   // handwriting imported from forScore (a full-page PNG)
+    const bm = bitmap(it);
+    if (bm) c.drawImage(bm, 0, 0, W, H);
   }
   c.restore();
+}
+
+const bitmaps = new WeakMap();
+function bitmap(it) {
+  const b = bitmaps.get(it);
+  if (b === undefined && it.b instanceof Blob) {
+    bitmaps.set(it, null);
+    createImageBitmap(it.b).then(bm => { bitmaps.set(it, bm); api?.refresh(); }).catch(() => {});
+  }
+  return b || null;
 }
 
 let live = null;   // {slot, item}
@@ -133,8 +150,9 @@ export function drawInk(canvas, sid, page, w, h) {
   const list = marks.get(sid)?.pages[page] || [];
   const extra = live && live.slot.sid === sid && live.slot.page === page && !list.includes(live.item) ? [live.item] : [];
   const all = list.concat(extra);
+  for (const it of all) if (it.t === 'img') drawItem(c, it, w, h);
   for (const it of all) if (it.t === 'hl') drawItem(c, it, w, h);
-  for (const it of all) if (it.t !== 'hl') drawItem(c, it, w, h);
+  for (const it of all) if (it.t !== 'hl' && it.t !== 'img') drawItem(c, it, w, h);
 }
 
 // ---------- undo ----------
@@ -174,6 +192,12 @@ function hits(it, x, y, slot) {
       if (qx * qx + qy * qy <= tol * tol) return true;
     }
     return false;
+  }
+  if (it.t === 'img') return false;   // imported handwriting: remove with Clear page
+  if (it.t === 'tx' && it.a === 'l') {
+    const lines = it.v.split('\n'), fs = it.s * W;
+    const wMax = Math.max(...lines.map(l => l.length)) * fs * 0.55;
+    return px >= it.x * W - 6 && px <= it.x * W + wMax + 6 && py >= it.y * H - 6 && py <= it.y * H + lines.length * fs * 1.2 + 6;
   }
   const r = it.s * W * (it.t === 'tx' ? 1 : 0.55);
   const rx = it.t === 'tx' ? Math.max(r, it.v.length * it.s * W * 0.3) : r * (STAMPS[it.k]?.wide || 1);
