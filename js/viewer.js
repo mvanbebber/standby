@@ -91,6 +91,7 @@ function makeSlot() {
 
 function attach(slot, e, id, page) {
   e.canvas.style.cssText = '';
+  slot.half = null;
   slot.sid = id; slot.page = page; slot.w = e.cssW; slot.h = e.cssH; slot.key = e.key;
   slot.paper.style.width = e.cssW + 'px'; slot.paper.style.height = e.cssH + 'px';
   slot.paper.replaceChildren(e.canvas, slot.ink);
@@ -178,6 +179,7 @@ function attachHalf(sl, ec, et, tgt) {
   const sc = score(), page = V.page;
   let split = Math.round(H * (sc.splits?.[page] ?? 0.5));
   sl.sid = null; sl.page = 0; sl.w = 0; sl.key = 'half';   // no drawing on a split page
+  sl.half = null;
   sl.paper.style.width = W + 'px'; sl.paper.style.height = H + 'px';
   const box = (cls, h) => { const b = document.createElement('div'); b.className = 'hw ' + cls; b.style.height = h + 'px'; return b; };
   const place = (c, w, h, left, top) => { c.style.cssText = `width:${w}px;height:${h}px;left:${left}px;top:${top}px`; return c; };
@@ -199,21 +201,12 @@ function attachHalf(sl, ec, et, tgt) {
     ec.canvas.style.top = inkB.style.top = -split + 'px';
     handle.style.top = split + 'px';
   };
-  handle.addEventListener('pointerdown', e => {
-    e.stopPropagation(); e.preventDefault();
-    handle.setPointerCapture(e.pointerId); handle.classList.add('drag');
-    const y0 = sl.paper.getBoundingClientRect().top;
-    const move = ev => { ev.stopPropagation(); setSplit(ev.clientY - y0); };
-    const end = ev => {
-      ev.stopPropagation();
-      handle.removeEventListener('pointermove', move); handle.removeEventListener('pointerup', end); handle.removeEventListener('pointercancel', end);
-      handle.classList.remove('drag');
-      (sc.splits ||= {})[page] = Math.round(split / H * 1000) / 1000;
-      db.put('scores', sc);
-    };
-    handle.addEventListener('pointermove', move); handle.addEventListener('pointerup', end); handle.addEventListener('pointercancel', end);
-  });
-  handle.addEventListener('pointerup', e => e.stopPropagation());
+  sl.half = {
+    lineY: () => sl.paper.getBoundingClientRect().top + split,
+    drag: clientY => setSplit(clientY - sl.paper.getBoundingClientRect().top),
+    on: v => handle.classList.toggle('drag', v),
+    save: () => { (sc.splits ||= {})[page] = Math.round(split / H * 1000) / 1000; db.put('scores', sc); },
+  };
   sl.paper.replaceChildren(top, bot, handle);
   if (!S.settings.splitHint) { S.settings.splitHint = true; saveSettings(); ui.toast('Drag the orange line to move where the page splits', 3500); }
   ink.loadMarks(tgt.id).then(() => ink.drawInk(inkT, tgt.id, tgt.p, et.cssW, et.cssH));
@@ -298,9 +291,33 @@ function slotAt(e) {
   return null;
 }
 
+// Dragging the half-page split line. Handled for the whole screen (not just the thin line), following the
+// finger anywhere until it lifts, so it works however iPad Safari routes touches.
+let splitDrag = null;
+function startSplitDrag(e) {
+  const h = V.slots[0]?.half;
+  if (!V.half || !h || Math.abs(e.clientY - h.lineY()) > 36) return false;
+  splitDrag = { id: e.pointerId, h };
+  h.on(true);
+  try { stage.setPointerCapture(e.pointerId); } catch {}
+  return true;
+}
+const splitMove = e => { if (splitDrag && e.pointerId === splitDrag.id) { e.preventDefault(); splitDrag.h.drag(e.clientY); } };
+const splitEnd = e => {
+  if (!splitDrag || e.pointerId !== splitDrag.id) return;
+  splitDrag.h.on(false); splitDrag.h.save(); splitDrag = null;
+};
+window.addEventListener('pointermove', splitMove, { passive: false });
+window.addEventListener('pointerup', splitEnd);
+window.addEventListener('pointercancel', splitEnd);
+// iPad Safari sometimes sends only touch events once a gesture starts; follow those too.
+window.addEventListener('touchmove', e => { if (splitDrag) { e.preventDefault(); splitDrag.h.drag(e.touches[0].clientY); } }, { passive: false });
+window.addEventListener('touchend', e => { if (splitDrag && !e.touches.length) splitEnd({ pointerId: splitDrag.id }); });
+
 let gesture = null;
 stage.addEventListener('pointerdown', e => {
   if (!V.open) return;
+  if (startSplitDrag(e)) { e.preventDefault(); gesture = null; return; }
   const pencil = e.pointerType === 'pen' && S.settings.pencilDraws;
   if (V.drawing || pencil) {
     ink.toggleStampPicker(false);
@@ -314,6 +331,7 @@ stage.addEventListener('pointerdown', e => {
 stage.addEventListener('pointermove', e => { if (ink.busy()) ink.move(e); });
 stage.addEventListener('pointerup', e => {
   if (ink.busy()) { ink.up(e); return; }
+  if (splitDrag) return;
   if (!gesture || e.pointerId !== gesture.id) return;
   const dx = e.clientX - gesture.x, dy = e.clientY - gesture.y; gesture = null;
   if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy) * 1.2) return dx < 0 ? next() : prev();

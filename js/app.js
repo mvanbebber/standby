@@ -9,7 +9,7 @@ import { writeZip, readZip } from './zip.js';
 import * as fsc from './forscore.js';
 
 // Keep in step with VERSION in sw.js (shown in Settings).
-const APP_VERSION = '2026.11.24.4';
+const APP_VERSION = '2026.11.24.5';
 const $ = s => document.querySelector(s);
 const content = $('#content');
 let view = { type: 'all' };
