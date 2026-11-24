@@ -1,6 +1,4 @@
-# StandBy's own Netlify site (base directory "standby"). Static files, no build step.
+# StandBy on Netlify: static files at the top level, no build step.
 [build]
   publish = "."
   command = ""
-  # Only deploy when something in standby/ changed (saves credits on Slow Down Buddy pushes).
-  ignore = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF -- ."

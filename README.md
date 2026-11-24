@@ -36,11 +36,11 @@ No build step. `index.html` + `app.css`, ES modules in `js/`:
 bump `VERSION` there with every change. PDF.js 4.10.38 (legacy build, Apache-2.0) is in `vendor/pdfjs/`.
 
 ## Run locally
-    cd standby && python3 -m http.server 8000
+    python3 -m http.server 8000
 
 ## Host it
-Any static host over HTTPS. On Netlify: a new site from this repo with base directory `standby` (its own
-`standby/netlify.toml` sets no build and only redeploys when `standby/` changes). On the iPad open the site in Safari, then Share › Add to Home Screen for a full-screen app.
+Any static host over HTTPS. On Netlify: a new site from this repo, base and publish directory left empty
+(`netlify.toml` sets no build step). On the iPad open the site in Safari, then Share › Add to Home Screen for a full-screen app.
 
 ## AirDrop
 A web app can't appear in the AirDrop/"Open in" list on iPad (Safari doesn't support it). AirDropped PDFs land
