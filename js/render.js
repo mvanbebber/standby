@@ -115,7 +115,7 @@ async function pump() {
     if (e.dropped) throw new Error('dropped');
     const page = await doc.getPage(Math.min(e.p, doc.numPages));
     const v1 = page.getViewport({ scale: 1 });
-    const crop = e.trim ? await cropOf(e.id, e.p, page) : FULL;
+    const crop = e.trim ? viewRect(await cropOf(e.id, e.p, page), v1, e.bw, e.bh) : FULL;
     if (e.dropped) throw new Error('dropped');
     const cw = v1.width * (crop[2] - crop[0]), ch = v1.height * (crop[3] - crop[1]);
     const fit = Math.min(e.bw / cw, e.bh / ch);
@@ -168,16 +168,16 @@ export async function makeThumb(bytes, width = 360) {
 }
 
 // ---------- margin trimming ----------
-// Each page's printed area, as [left, top, right, bottom] fractions of the page, found from a small render:
-// rows and columns with at least a couple of dark pixels count as music (single specks of dust don't),
-// plus a little breathing room. Saved per score in kv "crop:<id>", worked out in the background after import.
+// Each page's printed area, as [left, top, right, bottom] fractions of the page, found from a small render.
+// A row or column counts as printed only with a real amount of ink on two neighboring lines, so specks and
+// scanner dust don't. Saved per score in kv "crop2:<id>", worked out in the background after import.
 export const FULL = [0, 0, 1, 1];
 const crops = new Map();   // id -> {pages, ready, timer}
 function cropsFor(id) {
   let c = crops.get(id);
   if (!c) {
     c = { pages: {} };
-    c.ready = db.get('kv', 'crop:' + id).then(r => { if (r) Object.assign(c.pages, r.v); }).catch(() => {});
+    c.ready = db.get('kv', 'crop2:' + id).then(r => { if (r) Object.assign(c.pages, r.v); }).catch(() => {});
     crops.set(id, c);
   }
   return c;
@@ -185,9 +185,9 @@ function cropsFor(id) {
 function saveCrops(id) {
   const c = crops.get(id);
   clearTimeout(c.timer);
-  c.timer = setTimeout(() => db.put('kv', { k: 'crop:' + id, v: c.pages }), 500);
+  c.timer = setTimeout(() => db.put('kv', { k: 'crop2:' + id, v: c.pages }), 500);
 }
-export function forgetCrops(id) { crops.delete(id); db.del('kv', 'crop:' + id).catch(() => {}); }
+export function forgetCrops(id) { crops.delete(id); db.del('kv', 'crop2:' + id).catch(() => {}); }
 async function cropOf(id, n, page) {
   const c = cropsFor(id); await c.ready;
   if (!c.pages[n]) { c.pages[n] = await detectCrop(page); saveCrops(id); }
@@ -195,7 +195,7 @@ async function cropOf(id, n, page) {
 }
 export async function detectCrop(page) {
   const v1 = page.getViewport({ scale: 1 });
-  const W = 400, s = W / v1.width, H = Math.max(1, Math.round(v1.height * s));
+  const W = 640, s = W / v1.width, H = Math.max(1, Math.round(v1.height * s));
   const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
   const ctx = cv.getContext('2d', { willReadFrequently: true });
   ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H);
@@ -206,14 +206,37 @@ export async function detectCrop(page) {
   const rows = new Uint16Array(H), cols = new Uint16Array(W);
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
     const i = (y * W + x) * 4;
-    if (d[i] * 0.3 + d[i + 1] * 0.59 + d[i + 2] * 0.11 < 190) { rows[y]++; cols[x]++; }
+    if (d[i] * 0.3 + d[i + 1] * 0.59 + d[i + 2] * 0.11 < 215) { rows[y]++; cols[x]++; }
   }
-  const first = (a, min) => { for (let i = 0; i < a.length; i++) if (a[i] >= min) return i; return -1; };
-  const last = (a, min) => { for (let i = a.length - 1; i >= 0; i--) if (a[i] >= min) return i; return -1; };
-  const y0 = first(rows, 2), y1 = last(rows, 2), x0 = first(cols, 2), x1 = last(cols, 2);
+  const ink = (a, i, min) => a[i] >= min && ((a[i - 1] ?? 0) >= min || (a[i + 1] ?? 0) >= min);
+  const first = (a, min) => { for (let i = 0; i < a.length; i++) if (ink(a, i, min)) return i; return -1; };
+  const last = (a, min) => { for (let i = a.length - 1; i >= 0; i--) if (ink(a, i, min)) return i; return -1; };
+  const rowMin = 4, colMin = 4;   // dust is 1-2 px here; real ink (even small text) reaches 4 on neighboring lines
+  const y0 = first(rows, rowMin), y1 = last(rows, rowMin), x0 = first(cols, colMin), x1 = last(cols, colMin);
   if (y0 < 0 || x0 < 0 || x1 - x0 < W * 0.1 || y1 - y0 < H * 0.05) return FULL;   // blank or nearly blank page
-  const pad = 0.015, r = v => Math.round(v * 10000) / 10000;
-  return [r(Math.max(0, x0 / W - pad)), r(Math.max(0, y0 / H - pad)), r(Math.min(1, (x1 + 1) / W + pad)), r(Math.min(1, (y1 + 1) / H + pad))];
+  const r = v => Math.round(v * 10000) / 10000;
+  return [r(x0 / W), r(y0 / H), r((x1 + 1) / W), r((y1 + 1) / H)];
+}
+
+// Which part of the page to show, given the printed area. Width comes first: if the music still fits top to
+// bottom at full width, use full width (giving up only breathing room). Never smaller than the untrimmed page.
+const PAD = 0.015;
+function viewRect(c, v1, bw, bh) {
+  if (c === FULL || (c[0] === 0 && c[1] === 0 && c[2] === 1 && c[3] === 1)) return FULL;
+  const pw = v1.width, ph = v1.height;
+  const x0 = Math.max(0, c[0] - PAD), x1 = Math.min(1, c[2] + PAD);
+  const py0 = Math.max(0, c[1] - PAD), py1 = Math.min(1, c[3] + PAD);
+  const cw = pw * (x1 - x0), tightH = ph * (c[3] - c[1]), padH = ph * (py1 - py0);
+  let fit = bw / cw;
+  if (tightH * fit > bh) fit = bh / tightH;                       // music would be cut off: shrink to fit it
+  const full = Math.min(bw / pw, bh / ph);
+  if (fit <= full * 1.02) return FULL;                            // trimming wouldn't make the music bigger
+  // Vertical window: as much breathing room as fits, centered on the music, kept on the page.
+  const visH = Math.min(padH, bh / fit) / ph;
+  const mid = (c[1] + c[3]) / 2;
+  let y0 = Math.max(0, Math.min(1 - visH, mid - visH / 2));
+  if (y0 > c[1]) y0 = c[1];
+  return [x0, y0, x1, Math.min(1, y0 + visH)];
 }
 // Work out every page's crop ahead of time, only while nothing else is rendering.
 export async function precomputeCrops(id, bytes) {
