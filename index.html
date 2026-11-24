@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="StandBy">
+<meta name="theme-color" content="#121417">
+<meta name="description" content="A fast sheet music reader for the stage: PDFs, setlists, folders, pencil marks and stamps, fully offline.">
+<title>StandBy</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="stylesheet" href="app.css">
+<link rel="modulepreload" href="vendor/pdfjs/pdf.min.mjs">
+<script type="module" src="js/app.js"></script>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-back" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="M7 5l12 7-12 7z" class="fill"/></symbol>
+    <symbol id="i-draw" viewBox="0 0 24 24"><path d="M4 20l1-5L16 4l4 4L9 19z M14 6l4 4"/></symbol>
+    <symbol id="i-list" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></symbol>
+    <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/></symbol>
+    <symbol id="i-more" viewBox="0 0 24 24"><path d="M5 12h.01M12 12h.01M19 12h.01" style="stroke-width:3.2"/></symbol>
+    <symbol id="i-grip" viewBox="0 0 24 24"><path d="M5 8h14M5 12h14M5 16h14"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7"/></symbol>
+    <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3 6.5A1.5 1.5 0 0 1 4.5 5H9l2 2.5h8.5A1.5 1.5 0 0 1 21 9v9.5a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 18.5z"/></symbol>
+    <symbol id="i-setlist" viewBox="0 0 24 24"><path d="M10 6h10M10 12h10M10 18h10"/><path d="M4 4.5l1.5-1v5M3.5 14.2c0-1 .8-1.7 1.7-1.7s1.6.6 1.6 1.4c0 1.3-3.3 2.3-3.3 4.1h3.4" style="stroke-width:1.4"/></symbol>
+    <symbol id="i-grid" viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7" rx="1"/><rect x="13" y="4" width="7" height="7" rx="1"/><rect x="4" y="13" width="7" height="7" rx="1"/><rect x="13" y="13" width="7" height="7" rx="1"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></symbol>
+    <symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></symbol>
+    <symbol id="i-redo" viewBox="0 0 24 24"><path d="M15 14l5-5-5-5"/><path d="M20 9H10a6 6 0 0 0 0 12h3"/></symbol>
+    <symbol id="i-pen" viewBox="0 0 24 24"><path d="M4 20l1-5L16 4l4 4L9 19z"/></symbol>
+    <symbol id="i-hl" viewBox="0 0 24 24"><path d="M9 15l-3 3v2h6l2-2M9 15l7-11 5 4-7 10zM9 15l5 3"/></symbol>
+    <symbol id="i-eraser" viewBox="0 0 24 24"><path d="M8 20h12M5.5 15.5l9-9a2 2 0 0 1 2.8 0l2.2 2.2a2 2 0 0 1 0 2.8L12 19H8.5z M9 12l5 5"/></symbol>
+    <symbol id="i-text" viewBox="0 0 24 24"><path d="M5 6V4h14v2M12 4v16M9 20h6"/></symbol>
+    <symbol id="i-stamp" viewBox="0 0 24 24"><path d="M5 14a7 7 0 0 1 14 0" /><circle cx="12" cy="11.5" r="1.6" class="fill"/><path d="M4 18h16"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></symbol>
+    <symbol id="i-down" viewBox="0 0 24 24"><path d="M12 4v12M7 11l5 5 5-5M5 20h14"/></symbol>
+    <symbol id="i-up" viewBox="0 0 24 24"><path d="M12 16V4M7 9l5-5 5 5M5 20h14"/></symbol>
+    <symbol id="i-pages" viewBox="0 0 24 24"><rect x="3" y="5" width="8" height="14" rx="1"/><rect x="13" y="5" width="8" height="14" rx="1"/></symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+    <symbol id="i-select" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M8.5 12.2l2.4 2.4L15.8 9.7"/></symbol>
+  </defs>
+</svg>
+
+<div id="app">
+  <aside id="side">
+    <div class="brand"><img src="icon.svg" alt="" width="28" height="28"><span>StandBy</span></div>
+    <nav class="side-scroll">
+      <button class="nav" data-view="all"><svg><use href="#i-grid"/></svg><span>All scores</span><em id="countAll"></em></button>
+      <button class="nav" data-view="recent"><svg><use href="#i-clock"/></svg><span>Recently added</span></button>
+      <div class="side-head"><span>Setlists</span><button id="newSetlist" class="mini"><svg><use href="#i-plus"/></svg>New</button></div>
+      <div id="setlistNav"></div>
+      <div class="side-head"><span>Folders</span><button id="newFolder" class="mini"><svg><use href="#i-plus"/></svg>New</button></div>
+      <div id="folderNav"></div>
+    </nav>
+    <div class="side-foot">
+      <button class="nav" id="settingsBtn"><svg><use href="#i-gear"/></svg><span>Settings &amp; backup</span></button>
+    </div>
+  </aside>
+  <div id="scrim"></div>
+
+  <main id="main">
+    <header id="head">
+      <button id="menuBtn" class="icon-btn narrow-only" aria-label="Menu"><svg><use href="#i-menu"/></svg></button>
+      <div class="head-title"><h1 id="viewTitle">All scores</h1><div id="viewSub"></div></div>
+      <div id="headActions"></div>
+    </header>
+    <div id="filters">
+      <label class="search"><svg><use href="#i-search"/></svg><input id="search" type="search" placeholder="Search title or composer" autocomplete="off" autocorrect="off" spellcheck="false"></label>
+      <select id="sort" aria-label="Sort">
+        <option value="title">Title A–Z</option>
+        <option value="composer">Composer</option>
+        <option value="added">Newest first</option>
+      </select>
+      <button id="selectBtn" class="btn ghost"><svg><use href="#i-select"/></svg>Select</button>
+    </div>
+    <div id="content"></div>
+  </main>
+</div>
+
+<div id="selectBar" hidden>
+  <span id="selCount">0 selected</span>
+  <button class="btn" data-sel="setlist"><svg><use href="#i-setlist"/></svg>Add to setlist</button>
+  <button class="btn" data-sel="folder"><svg><use href="#i-folder"/></svg>Move to folder</button>
+  <button class="btn danger" data-sel="delete"><svg><use href="#i-trash"/></svg>Delete</button>
+  <button class="btn ghost" data-sel="cancel">Done</button>
+</div>
+
+<div id="viewer" hidden>
+  <div id="stage"></div>
+  <div id="pullTab" aria-hidden="true"></div>
+  <div id="nextBadge" hidden></div>
+  <div id="edgeFlash"></div>
+  <header id="vTop" class="vbar">
+    <button id="vClose" class="btn ghost"><svg><use href="#i-back"/></svg><span>Library</span></button>
+    <div class="v-title"><b id="vTitle"></b><span id="vSub"></span></div>
+    <div class="v-actions">
+      <button id="vSongs" class="btn ghost"><svg><use href="#i-list"/></svg><span>Songs</span></button>
+      <button id="vNight" class="btn ghost toggle"><svg><use href="#i-moon"/></svg><span>Night</span></button>
+      <button id="vTwo" class="btn ghost toggle"><svg><use href="#i-pages"/></svg><span>2 pages</span></button>
+      <button id="vDraw" class="btn accent"><svg><use href="#i-draw"/></svg><span>Draw</span></button>
+    </div>
+  </header>
+  <footer id="vBottom" class="vbar">
+    <span id="vPage"></span>
+    <input id="vSlider" type="range" min="1" max="1" value="1" aria-label="Page">
+    <span id="vHint">Tap right side: next · left side: back · top: menu</span>
+  </footer>
+  <div id="drawBar" hidden>
+    <div class="tools">
+      <button data-tool="pen"><svg><use href="#i-pen"/></svg><span>Pen</span></button>
+      <button data-tool="hl"><svg><use href="#i-hl"/></svg><span>Highlight</span></button>
+      <button data-tool="eraser"><svg><use href="#i-eraser"/></svg><span>Eraser</span></button>
+      <button data-tool="text"><svg><use href="#i-text"/></svg><span>Text</span></button>
+      <button data-tool="stamp" id="stampTool"><canvas id="stampIcon" width="48" height="48"></canvas><span>Stamps</span></button>
+    </div>
+    <div class="sep"></div>
+    <div class="colors" id="colors"></div>
+    <div class="sep"></div>
+    <div class="sizes" id="sizes">
+      <button data-size="0" aria-label="Thin"><i style="--d:5px"></i></button>
+      <button data-size="1" aria-label="Medium"><i style="--d:9px"></i></button>
+      <button data-size="2" aria-label="Thick"><i style="--d:14px"></i></button>
+    </div>
+    <div class="sep"></div>
+    <div class="tools">
+      <button id="undoBtn"><svg><use href="#i-undo"/></svg><span>Undo</span></button>
+      <button id="redoBtn"><svg><use href="#i-redo"/></svg><span>Redo</span></button>
+      <button id="clearBtn"><svg><use href="#i-trash"/></svg><span>Clear page</span></button>
+    </div>
+    <button id="drawDone" class="btn accent">Done</button>
+  </div>
+  <button id="dPrev" class="dturn" aria-label="Previous page"><svg><use href="#i-back"/></svg></button>
+  <button id="dNext" class="dturn" aria-label="Next page"><svg style="transform:scaleX(-1)"><use href="#i-back"/></svg></button>
+  <div id="stampPicker" hidden></div>
+  <div id="drawHint" hidden></div>
+</div>
+
+<div id="sheetWrap" hidden><div id="sheet" role="dialog" aria-modal="true"></div></div>
+<div id="toast" role="status"></div>
+<div id="dropHint" hidden><div>Drop PDFs to add them</div></div>
+<input type="file" id="fileInput" accept="application/pdf,.pdf,.zip,application/zip" multiple hidden>
+</body>
+</html>
