@@ -5,7 +5,7 @@
   e.g. color, center, favorite, practice (never "practise").
 
 ## No Sheet! (stage sheet music reader, web app / PWA)
-- Named "No Sheet!" (Nov 24, 2026; earlier StandBy, then Holy Sheet!). Icon (from the Holy Sheet! days): glowing gold halo over a sheet of music (`icon.svg`,
+- Named "No Sheet!" (Nov 24, 2026; earlier StandBy, then Holy Sheet!). Icon: amber magnifying glass over a tilted sheet of music ("No Sheet, Sherlock") (`icon.svg`,
   PNGs rendered from it). Internal names stay `standby` (repo, IndexedDB `standby`, cache names) so data is never lost.
 - No build step: `index.html`, `app.css`, ES modules in `js/` (see README for what each file does).
   PDF.js 4.10.38 legacy build is vendored in `vendor/pdfjs/`.

@@ -1,42 +1,74 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <defs>
-    <radialGradient id="bg" cx="50%" cy="30%" r="75%">
-      <stop offset="0" stop-color="#4a3912"/>
-      <stop offset=".5" stop-color="#1d1e20"/>
+    <radialGradient id="bg" cx="45%" cy="35%" r="75%">
+      <stop offset="0" stop-color="#2c2a24"/>
+      <stop offset=".6" stop-color="#1b1d21"/>
       <stop offset="1" stop-color="#121417"/>
     </radialGradient>
-    <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#fff6d0"/>
-      <stop offset=".45" stop-color="#ffd25e"/>
-      <stop offset="1" stop-color="#f0a21e"/>
+    <linearGradient id="rim" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffe08a"/>
+      <stop offset=".5" stop-color="#f5a524"/>
+      <stop offset="1" stop-color="#b86f0c"/>
     </linearGradient>
-    <filter id="glow" x="-60%" y="-120%" width="220%" height="340%"><feGaussianBlur stdDeviation="16"/></filter>
-    <filter id="soft" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="22"/></filter>
+    <linearGradient id="handle" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#8a6a3a"/>
+      <stop offset="1" stop-color="#5a4120"/>
+    </linearGradient>
+    <radialGradient id="glass" cx="38%" cy="32%" r="75%">
+      <stop offset="0" stop-color="#ffffff" stop-opacity=".55"/>
+      <stop offset=".5" stop-color="#fff6dc" stop-opacity=".08"/>
+      <stop offset="1" stop-color="#f5a524" stop-opacity=".12"/>
+    </radialGradient>
+    <clipPath id="lens"><circle cx="292" cy="236" r="96"/></clipPath>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="10"/></filter>
   </defs>
   <rect width="512" height="512" rx="112" fill="url(#bg)"/>
-  <g transform="translate(256 330) scale(1.16) translate(-256 -312)">
-  <!-- holy light on the page -->
-  <rect x="150" y="178" width="212" height="270" rx="14" fill="#ffd56a" opacity=".38" filter="url(#soft)"/>
-  <!-- the sheet -->
-  <rect x="158" y="184" width="196" height="256" rx="10" fill="#fbf8f0"/>
-  <g stroke="#8e8777" stroke-width="3.2">
-    <path d="M180 232h152M180 241h152M180 250h152M180 259h152M180 268h152"/>
-    <path d="M180 330h152M180 339h152M180 348h152M180 357h152M180 366h152"/>
+
+  <!-- the sheet of music, slightly tilted -->
+  <g transform="rotate(-7 230 260)">
+    <rect x="112" y="92" width="232" height="318" rx="10" fill="#000" opacity=".45" filter="url(#shadow)" transform="translate(6 10)"/>
+    <rect x="112" y="92" width="232" height="318" rx="10" fill="#fbf8f0"/>
+    <g stroke="#8e8777" stroke-width="3">
+      <path d="M136 140h184M136 149h184M136 158h184M136 167h184M136 176h184"/>
+      <path d="M136 232h184M136 241h184M136 250h184M136 259h184M136 268h184"/>
+      <path d="M136 324h184M136 333h184M136 342h184M136 351h184M136 360h184"/>
+    </g>
+    <g fill="#1d1e20">
+      <ellipse cx="162" cy="171" rx="8" ry="6" transform="rotate(-20 162 171)"/>
+      <ellipse cx="196" cy="158" rx="8" ry="6" transform="rotate(-20 196 158)"/>
+      <ellipse cx="170" cy="355" rx="8" ry="6" transform="rotate(-20 170 355)"/>
+      <ellipse cx="206" cy="342" rx="8" ry="6" transform="rotate(-20 206 342)"/>
+      <ellipse cx="160" cy="254" rx="8" ry="6" transform="rotate(-20 160 254)"/>
+    </g>
+    <g stroke="#1d1e20" stroke-width="3.5" fill="none" stroke-linecap="round">
+      <path d="M169 169v-34M203 156v-34M169 135l34-8M177 353v-34M213 340v-34M177 319l36-8M167 252v-34"/>
+    </g>
   </g>
-  <g fill="#1d1e20">
-    <ellipse cx="214" cy="263" rx="10.5" ry="7.5" transform="rotate(-20 214 263)"/>
-    <ellipse cx="262" cy="250" rx="10.5" ry="7.5" transform="rotate(-20 262 250)"/>
-    <ellipse cx="300" cy="241" rx="10.5" ry="7.5" transform="rotate(-20 300 241)"/>
-    <ellipse cx="232" cy="352" rx="10.5" ry="7.5" transform="rotate(-20 232 352)"/>
-    <ellipse cx="290" cy="343" rx="10.5" ry="7.5" transform="rotate(-20 290 343)"/>
+
+  <!-- handle -->
+  <path d="M362 306l78 78" stroke="url(#handle)" stroke-width="40" stroke-linecap="round"/>
+  <path d="M362 306l24 24" stroke="url(#rim)" stroke-width="30" stroke-linecap="round"/>
+
+  <!-- lens: the music underneath, magnified -->
+  <g clip-path="url(#lens)">
+    <circle cx="292" cy="236" r="96" fill="#fdfbf5"/>
+    <g transform="rotate(-7 292 236)">
+      <g stroke="#7f7869" stroke-width="5">
+        <path d="M170 196h250M170 214h250M170 232h250M170 250h250M170 268h250"/>
+      </g>
+      <g fill="#141518">
+        <ellipse cx="252" cy="259" rx="17" ry="12.5" transform="rotate(-20 252 259)"/>
+        <ellipse cx="318" cy="232" rx="17" ry="12.5" transform="rotate(-20 318 232)"/>
+      </g>
+      <g stroke="#141518" stroke-width="6.5" fill="none" stroke-linecap="round">
+        <path d="M267 255v-78M333 228v-78"/>
+        <path d="M267 177l66-27" stroke-width="15"/>
+      </g>
+    </g>
+    <circle cx="292" cy="236" r="96" fill="url(#glass)"/>
   </g>
-  <g stroke="#1d1e20" stroke-width="4.5" fill="none" stroke-linecap="round">
-    <path d="M223 261v-46M271 248v-46M309 239v-46M271 202l38-9"/>
-    <path d="M241 350v-46M299 341v-46M241 304l58-9"/>
-  </g>
-  </g>
-  <!-- the halo: soft glow, gold ring, bright rim -->
-  <ellipse cx="256" cy="98" rx="132" ry="38" fill="none" stroke="#ffc53d" stroke-width="34" opacity=".85" filter="url(#glow)"/>
-  <ellipse cx="256" cy="98" rx="132" ry="38" fill="none" stroke="url(#gold)" stroke-width="17"/>
-  <ellipse cx="256" cy="94" rx="126" ry="33" fill="none" stroke="#fffbe6" stroke-width="3.5" opacity=".9"/>
+  <!-- rim and a glint -->
+  <circle cx="292" cy="236" r="96" fill="none" stroke="url(#rim)" stroke-width="18"/>
+  <circle cx="292" cy="236" r="86" fill="none" stroke="#000" stroke-opacity=".18" stroke-width="3"/>
+  <path d="M232 192a76 76 0 0 1 46-36" stroke="#fff" stroke-opacity=".75" stroke-width="7" stroke-linecap="round" fill="none"/>
 </svg>
