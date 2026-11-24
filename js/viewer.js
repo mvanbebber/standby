@@ -92,10 +92,10 @@ function makeSlot() {
 function attach(slot, e, id, page) {
   e.canvas.style.cssText = '';
   slot.half = null;
-  slot.sid = id; slot.page = page; slot.w = e.cssW; slot.h = e.cssH; slot.key = e.key;
+  slot.sid = id; slot.page = page; slot.w = e.cssW; slot.h = e.cssH; slot.key = e.key; slot.crop = e.crop;
   slot.paper.style.width = e.cssW + 'px'; slot.paper.style.height = e.cssH + 'px';
   slot.paper.replaceChildren(e.canvas, slot.ink);
-  ink.drawInk(slot.ink, id, page, e.cssW, e.cssH);
+  ink.drawInk(slot.ink, id, page, e.cssW, e.cssH, e.crop);
 }
 function placeholder(slot, g, id, page) {
   const w = Math.round(Math.min(g.bw, g.bh * 0.773)), h = Math.round(w / 0.773);
@@ -209,11 +209,11 @@ function attachHalf(sl, ec, et, tgt) {
   };
   sl.paper.replaceChildren(top, bot, handle);
   if (!S.settings.splitHint) { S.settings.splitHint = true; saveSettings(); ui.toast('Drag the orange line to move where the page splits', 3500); }
-  ink.loadMarks(tgt.id).then(() => ink.drawInk(inkT, tgt.id, tgt.p, et.cssW, et.cssH));
-  ink.drawInk(inkB, id, V.page, W, H);
+  ink.loadMarks(tgt.id).then(() => ink.drawInk(inkT, tgt.id, tgt.p, et.cssW, et.cssH, et.crop));
+  ink.drawInk(inkB, id, V.page, W, H, ec.crop);
 }
 
-function refreshInk() { for (const sl of V.slots) if (sl.w) ink.drawInk(sl.ink, sl.sid, sl.page, sl.w, sl.h); }
+function refreshInk() { for (const sl of V.slots) if (sl.w) ink.drawInk(sl.ink, sl.sid, sl.page, sl.w, sl.h, sl.crop); }
 
 function updateChrome(pages, half) {
   const s = score(), n = s.pageCount || 1;

@@ -140,13 +140,18 @@ function bitmap(it) {
 }
 
 let live = null;   // {slot, item}
-export function drawInk(canvas, sid, page, w, h) {
+// w, h: size on screen of the visible part of the page; crop: which part ([x0, y0, x1, y1] of the page).
+// Marks are stored relative to the whole page, so they're drawn at the whole page's size, shifted.
+export function drawInk(canvas, sid, page, w, h, crop = FULL) {
   const d = Math.min(devicePixelRatio || 1, 3);
   const pw = Math.round(w * d), ph = Math.round(h * d);
   if (canvas.width !== pw || canvas.height !== ph) { canvas.width = pw; canvas.height = ph; }
   const c = canvas.getContext('2d');
-  c.setTransform(d, 0, 0, d, 0, 0);
-  c.clearRect(0, 0, w, h);
+  c.setTransform(1, 0, 0, 1, 0, 0);
+  c.clearRect(0, 0, canvas.width, canvas.height);
+  const fw = w / (crop[2] - crop[0]), fh = h / (crop[3] - crop[1]);
+  c.setTransform(d, 0, 0, d, -crop[0] * fw * d, -crop[1] * fh * d);
+  w = fw; h = fh;
   const list = marks.get(sid)?.pages[page] || [];
   const extra = live && live.slot.sid === sid && live.slot.page === page && !list.includes(live.item) ? [live.item] : [];
   const all = list.concat(extra);
@@ -172,14 +177,16 @@ let api;           // provided by the viewer: refresh(), inkCanvasFor(slot), ask
 let active = null; // {slot, id, tool, moved}
 const R = n => Math.round(n * 10000) / 10000;
 
+const FULL = [0, 0, 1, 1];
+const full = slot => { const c = slot.crop || FULL; return [slot.w / (c[2] - c[0]), slot.h / (c[3] - c[1])]; };
 function pos(e, slot) {
-  const r = slot.paper.getBoundingClientRect();
-  return [(e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height];
+  const r = slot.paper.getBoundingClientRect(), c = slot.crop || FULL;
+  return [c[0] + (e.clientX - r.left) / r.width * (c[2] - c[0]), c[1] + (e.clientY - r.top) / r.height * (c[3] - c[1])];
 }
-function redraw(slot) { drawInk(slot.ink, slot.sid, slot.page, slot.w, slot.h); }
+function redraw(slot) { drawInk(slot.ink, slot.sid, slot.page, slot.w, slot.h, slot.crop); }
 
 function hits(it, x, y, slot) {
-  const W = slot.w, H = slot.h, px = x * W, py = y * H;
+  const [W, H] = full(slot), px = x * W, py = y * H;
   if (it.t === 'pen' || it.t === 'hl') {
     const tol = Math.max(it.w * W / 2, 10);
     const p = it.p;
@@ -241,7 +248,8 @@ export function move(e) {
     for (const ev of evs.length ? evs : [e]) {
       const [x, y] = pos(ev, slot);
       const lx = p[p.length - 2], ly = p[p.length - 1];
-      if (Math.abs(x - lx) * slot.w + Math.abs(y - ly) * slot.h < 1.2) continue;
+      const [FW, FH] = full(slot);
+      if (Math.abs(x - lx) * FW + Math.abs(y - ly) * FH < 1.2) continue;
       p.push(R(x), R(y));
     }
     schedule(slot);

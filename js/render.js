@@ -53,7 +53,10 @@ let running = null;
 let pinned = new Set();
 let idleWaiters = [];
 
-export const keyOf = (id, p, bw, bh, dpr) => `${id}|${p}|${bw}|${bh}|${dpr}`;
+// Trim white margins: each page is zoomed so its printed area fills the screen (see detectCrop).
+let trimOn = true;
+export function setTrim(on) { trimOn = !!on; }
+export const keyOf = (id, p, bw, bh, dpr) => `${id}|${p}|${bw}|${bh}|${dpr}|${trimOn ? 't' : 'f'}`;
 export function peek(key) { const e = cache.get(key); return e && e.done ? e : null; }
 
 function drop(e) {
@@ -76,7 +79,7 @@ export function want(list, keep) {
       if (!e.done) e.prio = i;
       return e.promise;
     }
-    e = { key, id: r.id, p: r.p, bw: r.bw, bh: r.bh, dpr: r.dpr, prio: i, done: false };
+    e = { key, id: r.id, p: r.p, bw: r.bw, bh: r.bh, dpr: r.dpr, prio: i, done: false, trim: trimOn };
     e.promise = new Promise((res, rej) => { e.res = res; e.rej = rej; });
     e.promise.catch(() => {});
     cache.set(key, e);
@@ -112,18 +115,21 @@ async function pump() {
     if (e.dropped) throw new Error('dropped');
     const page = await doc.getPage(Math.min(e.p, doc.numPages));
     const v1 = page.getViewport({ scale: 1 });
-    const fit = Math.min(e.bw / v1.width, e.bh / v1.height);
+    const crop = e.trim ? await cropOf(e.id, e.p, page) : FULL;
+    if (e.dropped) throw new Error('dropped');
+    const cw = v1.width * (crop[2] - crop[0]), ch = v1.height * (crop[3] - crop[1]);
+    const fit = Math.min(e.bw / cw, e.bh / ch);
     let px = fit * e.dpr;
-    if (v1.width * v1.height * px * px > MAX_PIXELS) px = Math.sqrt(MAX_PIXELS / (v1.width * v1.height));
-    const vp = page.getViewport({ scale: px });
+    if (cw * ch * px * px > MAX_PIXELS) px = Math.sqrt(MAX_PIXELS / (cw * ch));
+    const vp = page.getViewport({ scale: px, offsetX: -crop[0] * v1.width * px, offsetY: -crop[1] * v1.height * px });
     canvas = document.createElement('canvas');
-    canvas.width = Math.floor(vp.width); canvas.height = Math.floor(vp.height);
+    canvas.width = Math.floor(cw * px); canvas.height = Math.floor(ch * px);
     const ctx = canvas.getContext('2d', { alpha: false });
     ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, canvas.width, canvas.height);
     e.task = page.render({ canvasContext: ctx, viewport: vp });
     await e.task.promise;
     e.task = null;
-    e.canvas = canvas; e.cssW = Math.round(v1.width * fit); e.cssH = Math.round(v1.height * fit);
+    e.canvas = canvas; e.cssW = Math.round(cw * fit); e.cssH = Math.round(ch * fit); e.crop = crop;
     e.done = true;
     e.res(e);
   } catch (err) {
@@ -160,3 +166,69 @@ export async function makeThumb(bytes, width = 360) {
     return { blob, pages: doc.numPages };
   } finally { doc.destroy(); }
 }
+
+// ---------- margin trimming ----------
+// Each page's printed area, as [left, top, right, bottom] fractions of the page, found from a small render:
+// rows and columns with at least a couple of dark pixels count as music (single specks of dust don't),
+// plus a little breathing room. Saved per score in kv "crop:<id>", worked out in the background after import.
+export const FULL = [0, 0, 1, 1];
+const crops = new Map();   // id -> {pages, ready, timer}
+function cropsFor(id) {
+  let c = crops.get(id);
+  if (!c) {
+    c = { pages: {} };
+    c.ready = db.get('kv', 'crop:' + id).then(r => { if (r) Object.assign(c.pages, r.v); }).catch(() => {});
+    crops.set(id, c);
+  }
+  return c;
+}
+function saveCrops(id) {
+  const c = crops.get(id);
+  clearTimeout(c.timer);
+  c.timer = setTimeout(() => db.put('kv', { k: 'crop:' + id, v: c.pages }), 500);
+}
+export function forgetCrops(id) { crops.delete(id); db.del('kv', 'crop:' + id).catch(() => {}); }
+async function cropOf(id, n, page) {
+  const c = cropsFor(id); await c.ready;
+  if (!c.pages[n]) { c.pages[n] = await detectCrop(page); saveCrops(id); }
+  return c.pages[n];
+}
+export async function detectCrop(page) {
+  const v1 = page.getViewport({ scale: 1 });
+  const W = 400, s = W / v1.width, H = Math.max(1, Math.round(v1.height * s));
+  const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+  const ctx = cv.getContext('2d', { willReadFrequently: true });
+  ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H);
+  try { await page.render({ canvasContext: ctx, viewport: page.getViewport({ scale: s }) }).promise; }
+  catch { cv.width = cv.height = 0; return FULL; }
+  const d = ctx.getImageData(0, 0, W, H).data;
+  cv.width = cv.height = 0;
+  const rows = new Uint16Array(H), cols = new Uint16Array(W);
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    const i = (y * W + x) * 4;
+    if (d[i] * 0.3 + d[i + 1] * 0.59 + d[i + 2] * 0.11 < 190) { rows[y]++; cols[x]++; }
+  }
+  const first = (a, min) => { for (let i = 0; i < a.length; i++) if (a[i] >= min) return i; return -1; };
+  const last = (a, min) => { for (let i = a.length - 1; i >= 0; i--) if (a[i] >= min) return i; return -1; };
+  const y0 = first(rows, 2), y1 = last(rows, 2), x0 = first(cols, 2), x1 = last(cols, 2);
+  if (y0 < 0 || x0 < 0 || x1 - x0 < W * 0.1 || y1 - y0 < H * 0.05) return FULL;   // blank or nearly blank page
+  const pad = 0.015, r = v => Math.round(v * 10000) / 10000;
+  return [r(Math.max(0, x0 / W - pad)), r(Math.max(0, y0 / H - pad)), r(Math.min(1, (x1 + 1) / W + pad)), r(Math.min(1, (y1 + 1) / H + pad))];
+}
+// Work out every page's crop ahead of time, only while nothing else is rendering.
+export async function precomputeCrops(id, bytes) {
+  const c = cropsFor(id); await c.ready;
+  const doc = await openBytes(bytes);
+  try {
+    let changed = false;
+    for (let n = 1; n <= doc.numPages; n++) {
+      if (c.pages[n]) continue;
+      await whenIdle();
+      if (!crops.has(id)) return;
+      c.pages[n] = await detectCrop(await doc.getPage(n)); changed = true;
+      if (n % 20 === 0) saveCrops(id);
+    }
+    if (changed) saveCrops(id);
+  } finally { doc.destroy(); }
+}
+export async function hasAllCrops(id, pages) { const c = cropsFor(id); await c.ready; for (let n = 1; n <= pages; n++) if (!c.pages[n]) return false; return true; }

@@ -8,6 +8,7 @@ export const DEFAULTS = {
   libraryId: null,     // the band library being shown
   pencilDraws: true,   // Apple Pencil writes on the page without entering Draw mode
   night: false,        // inverted pages for dark stages
+  trim: true,          // trim white margins so the music fills the screen
   sort: 'title',
   tool: 'pen', color: '#d32f2f', size: 1, stamp: 'fermata',
 };

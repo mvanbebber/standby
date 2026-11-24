@@ -9,7 +9,7 @@ import { writeZip, readZip } from './zip.js';
 import * as fsc from './forscore.js';
 
 // Keep in step with VERSION in sw.js (shown in Settings).
-const APP_VERSION = '2026.11.24.5';
+const APP_VERSION = '2026.11.24.6';
 const $ = s => document.querySelector(s);
 const content = $('#content');
 let view = { type: 'all' };
@@ -241,7 +241,7 @@ async function deleteScores(ids) {
     'This removes the PDF and its marks from this device. It also leaves any setlists it was in.', 'Delete', true))) return false;
   for (const id of ids) {
     S.scores.delete(id);
-    R.forgetDoc(id); ink.forgetMarks(id);
+    R.forgetDoc(id); R.forgetCrops(id); ink.forgetMarks(id);
     if (thumbs.has(id)) { URL.revokeObjectURL(thumbs.get(id)); thumbs.delete(id); }
     await Promise.all(['scores', 'files', 'thumbs', 'marks'].map(st => db.del(st, id)));
   }
@@ -291,7 +291,7 @@ async function libraryMenu() {
       sc.length || sl.length ? `This deletes its ${plural(sc.length, 'score')} and ${plural(sl.length, 'setlist')} from this device, with their marks. Copies in other libraries stay.` : 'It is empty.',
       'Delete library', true))) return;
     for (const s of sc) {
-      S.scores.delete(s.id); R.forgetDoc(s.id); ink.forgetMarks(s.id);
+      S.scores.delete(s.id); R.forgetDoc(s.id); R.forgetCrops(s.id); ink.forgetMarks(s.id);
       if (thumbs.has(s.id)) { URL.revokeObjectURL(thumbs.get(s.id)); thumbs.delete(s.id); }
       await Promise.all(['scores', 'files', 'thumbs', 'marks'].map(st => db.del(st, s.id)));
     }
@@ -701,8 +701,28 @@ async function runThumbs() {
     const card = content.querySelector(`.card[data-id="${id}"]`);
     if (card) card.outerHTML = cardHtml(s);
     else if (view.type === 'setlist') renderSetlist();
+    queueCrops(id);
   }
   thumbing = false;
+}
+
+// Page margins for "Trim white margins", worked out ahead of time so page turns stay instant.
+const cropQ = [];
+let cropping = false;
+function queueCrops(id) { if (!cropQ.includes(id)) cropQ.push(id); if (!cropping) runCrops(); }
+async function runCrops() {
+  cropping = true;
+  while (cropQ.length) {
+    const id = cropQ.shift();
+    const s = S.scores.get(id); if (!s || !s.pageCount) continue;
+    try {
+      if (await R.hasAllCrops(id, s.pageCount)) continue;
+      await R.whenIdle();
+      const f = await db.get('files', id);
+      await R.precomputeCrops(id, new Uint8Array(await f.blob.arrayBuffer()));
+    } catch (err) { console.warn('margins failed', id, err); }
+  }
+  cropping = false;
 }
 
 // ---------- settings & backup ----------
@@ -718,6 +738,7 @@ async function openSettings() {
     ${sw('twoUp', 'Two pages side by side', 'When the iPad is sideways.')}
     ${sw('halfTurns', 'Half-page turns', 'Each turn swaps half the page: first the top half shows what comes next while you finish the bottom, then the rest. Shows one page at a time.')}
     ${sw('pencilDraws', 'Apple Pencil writes right away', 'No need to tap Draw first. Fingers still turn pages.')}
+    ${sw('trim', 'Trim white margins', 'The music fills the screen from edge to edge. If that would cut off the top or bottom, it shrinks just enough to fit.')}
     ${sw('night', 'Night pages', 'White pages turn dark for dim stages.')}
     <div class="sheet-section">Foot pedals &amp; keyboards</div>
     <p style="margin-top:6px;font-size:14px">Page-turn pedals work out of the box: → ↓ Page Down and Space go forward, ← ↑ Page Up go back.</p>
@@ -739,6 +760,7 @@ async function openSettings() {
   sh.el.querySelectorAll('.switch').forEach(b => b.onclick = () => {
     const k = b.dataset.k;
     S.settings[k] = !S.settings[k];
+    if (k === 'trim') R.setTrim(S.settings.trim);
     if (k === 'halfTurns' && S.settings.halfTurns) S.settings.twoUp = false;
     if (k === 'twoUp' && S.settings.twoUp) S.settings.halfTurns = false;
     saveSettings();
@@ -834,12 +856,13 @@ function setupUpdates() {
 // ---------- start ----------
 (async function start() {
   await load();
+  R.setTrim(S.settings.trim);
   $('#sort').value = S.settings.sort;
   const have = new Set(await db.keys('thumbs'));
   await Promise.all([...have].map(async id => {
     const t = await db.get('thumbs', id); if (t && S.scores.has(id)) thumbs.set(id, URL.createObjectURL(t.blob));
   }));
   render();
-  for (const id of S.scores.keys()) if (!have.has(id)) queueThumb(id);
+  for (const id of S.scores.keys()) if (!have.has(id)) queueThumb(id); else queueCrops(id);
   if ('serviceWorker' in navigator && location.protocol.startsWith('http')) setupUpdates();
 })();

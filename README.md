@@ -15,7 +15,7 @@ A fast, offline PDF music reader for iPad (also works on computers and phones). 
   accidentals, segno/coda, V.S., rit., glasses, fingerings…), 6 colors, 3 sizes, undo/redo, clear page.
   Every button has a word under it. Apple Pencil can write without entering Draw mode (Settings).
 - **Stage features**: tap right side to go forward, left third (or half) to go back, top strip for the menu;
-  swipe; half-page turns (top half shows what's next while you finish the bottom; drag the orange line to set the split, remembered per page); Bluetooth page-turn pedals (arrows, Page Up/Down, Space); two pages side by side when sideways;
+  white margins trimmed so the music fills the screen edge to edge (never cutting notes off); swipe; half-page turns (top half shows what's next while you finish the bottom; drag the orange line to set the split, remembered per page); Bluetooth page-turn pedals (arrows, Page Up/Down, Space); two pages side by side when sideways;
   Night pages; screen stays awake while reading.
 - **Offline**: a service worker caches the whole app; PDFs and marks live in IndexedDB on the device.
 - **Backup**: Settings › Back up library saves one .zip (PDFs, marks, setlists, folders); pick it with
