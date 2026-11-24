@@ -4,7 +4,9 @@
 - The owner is American: use **American English** everywhere (app text, README, commit messages),
   e.g. color, center, favorite, practice (never "practise").
 
-## StandBy (stage sheet music reader, web app / PWA)
+## Holy Sheet! (stage sheet music reader, web app / PWA)
+- Named "Holy Sheet!" (Nov 24, 2026; first called StandBy). Icon: glowing gold halo over a sheet of music (`icon.svg`,
+  PNGs rendered from it). Internal names stay `standby` (repo, IndexedDB `standby`, cache names) so data is never lost.
 - No build step: `index.html`, `app.css`, ES modules in `js/` (see README for what each file does).
   PDF.js 4.10.38 legacy build is vendored in `vendor/pdfjs/`.
 - Offline: `sw.js` precaches every file. Bump `VERSION` there with every change (and `APP_VERSION` in `js/app.js`,

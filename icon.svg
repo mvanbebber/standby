@@ -1,12 +1,42 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="112" fill="#1a1d22"/>
-  <rect x="136" y="92" width="240" height="250" rx="14" fill="#f6f4ef"/>
-  <g stroke="#9a9488" stroke-width="5">
-    <path d="M166 150h180M166 166h180M166 182h180M166 198h180M166 214h180"/>
-    <path d="M166 254h180M166 270h180M166 286h180M166 302h180M166 318h180"/>
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="30%" r="75%">
+      <stop offset="0" stop-color="#4a3912"/>
+      <stop offset=".5" stop-color="#1d1e20"/>
+      <stop offset="1" stop-color="#121417"/>
+    </radialGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff6d0"/>
+      <stop offset=".45" stop-color="#ffd25e"/>
+      <stop offset="1" stop-color="#f0a21e"/>
+    </linearGradient>
+    <filter id="glow" x="-60%" y="-120%" width="220%" height="340%"><feGaussianBlur stdDeviation="16"/></filter>
+    <filter id="soft" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="22"/></filter>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <g transform="translate(256 330) scale(1.16) translate(-256 -312)">
+  <!-- holy light on the page -->
+  <rect x="150" y="178" width="212" height="270" rx="14" fill="#ffd56a" opacity=".38" filter="url(#soft)"/>
+  <!-- the sheet -->
+  <rect x="158" y="184" width="196" height="256" rx="10" fill="#fbf8f0"/>
+  <g stroke="#8e8777" stroke-width="3.2">
+    <path d="M180 232h152M180 241h152M180 250h152M180 259h152M180 268h152"/>
+    <path d="M180 330h152M180 339h152M180 348h152M180 357h152M180 366h152"/>
   </g>
-  <g fill="#1a1d22"><ellipse cx="214" cy="198" rx="14" ry="10" transform="rotate(-20 214 198)"/><ellipse cx="290" cy="174" rx="14" ry="10" transform="rotate(-20 290 174)"/></g>
-  <path d="M226 196v-62M302 172v-62M226 134l76-24" stroke="#1a1d22" stroke-width="7" fill="none"/>
-  <path d="M120 342h272" stroke="#f5a524" stroke-width="22" stroke-linecap="round"/>
-  <path d="M256 352v86M256 438l-70 34M256 438l70 34" stroke="#f5a524" stroke-width="16" stroke-linecap="round"/>
+  <g fill="#1d1e20">
+    <ellipse cx="214" cy="263" rx="10.5" ry="7.5" transform="rotate(-20 214 263)"/>
+    <ellipse cx="262" cy="250" rx="10.5" ry="7.5" transform="rotate(-20 262 250)"/>
+    <ellipse cx="300" cy="241" rx="10.5" ry="7.5" transform="rotate(-20 300 241)"/>
+    <ellipse cx="232" cy="352" rx="10.5" ry="7.5" transform="rotate(-20 232 352)"/>
+    <ellipse cx="290" cy="343" rx="10.5" ry="7.5" transform="rotate(-20 290 343)"/>
+  </g>
+  <g stroke="#1d1e20" stroke-width="4.5" fill="none" stroke-linecap="round">
+    <path d="M223 261v-46M271 248v-46M309 239v-46M271 202l38-9"/>
+    <path d="M241 350v-46M299 341v-46M241 304l58-9"/>
+  </g>
+  </g>
+  <!-- the halo: soft glow, gold ring, bright rim -->
+  <ellipse cx="256" cy="98" rx="132" ry="38" fill="none" stroke="#ffc53d" stroke-width="34" opacity=".85" filter="url(#glow)"/>
+  <ellipse cx="256" cy="98" rx="132" ry="38" fill="none" stroke="url(#gold)" stroke-width="17"/>
+  <ellipse cx="256" cy="94" rx="126" ry="33" fill="none" stroke="#fffbe6" stroke-width="3.5" opacity=".9"/>
 </svg>
