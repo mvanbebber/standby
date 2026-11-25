@@ -9,7 +9,8 @@ import { writeZip, readZip } from './zip.js';
 import * as fsc from './forscore.js';
 
 // Keep in step with VERSION in sw.js (shown in Settings).
-const APP_VERSION = '2026.11.24.10';
+const APP_VERSION = '2026.11.24.11';
+const COPYRIGHT_YEAR = 2026;
 const $ = s => document.querySelector(s);
 const content = $('#content');
 let view = { type: 'all' };
@@ -751,7 +752,12 @@ async function openSettings() {
     <div class="sheet-actions" style="justify-content:flex-start;margin-top:6px">
       <button class="btn" id="doBackup">${icon('i-up')}Back up library</button>
       <button class="btn" id="doRestore">${icon('i-down')}Restore a backup</button></div>
-    <p style="margin-top:18px;font-size:13px">No Sheet! version ${APP_VERSION}. Updates install by themselves when you're online.</p>
+    <div class="sheet-section">About</div>
+    <div class="about">
+      <img src="icon.svg" alt="" width="56" height="56">
+      <div><b>No Sheet!</b><br>Version ${APP_VERSION}<br>Developed by Michael Van Bebber<br>© ${COPYRIGHT_YEAR} Michael Van Bebber. All rights reserved.</div>
+    </div>
+    <p style="font-size:13px">Updates install by themselves when you're online. PDF rendering by PDF.js (Mozilla, Apache License 2.0).</p>
     <div class="sheet-actions"><button class="btn accent" data-x>Done</button></div>`);
   const seg = sh.el.querySelector('#backZone');
   const paintSeg = () => seg.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.v === S.settings.backZone));
@@ -862,6 +868,7 @@ function setupUpdates() {
   await Promise.all([...have].map(async id => {
     const t = await db.get('thumbs', id); if (t && S.scores.has(id)) thumbs.set(id, URL.createObjectURL(t.blob));
   }));
+  $('#sideVer').innerHTML = `Version ${APP_VERSION}<br>© ${COPYRIGHT_YEAR} Michael Van Bebber`;
   render();
   for (const id of S.scores.keys()) if (!have.has(id)) queueThumb(id); else queueCrops(id);
   if ('serviceWorker' in navigator && location.protocol.startsWith('http')) setupUpdates();

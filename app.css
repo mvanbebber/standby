@@ -253,3 +253,7 @@ svg .fill { fill: currentColor; }
 
 .paper .hw.bot { bottom: 0; }
 .paper .hw .tag { position: absolute; right: 8px; bottom: 12px; z-index: 2; background: rgba(22,24,28,.85); color: #fff; font-size: 12px; font-weight: 700; padding: 3px 8px; border-radius: 7px; }
+.side-ver { padding: 4px 12px 0; font-size: 11px; color: var(--muted); opacity: .8; }
+.about { display: flex; gap: 14px; align-items: center; margin: 8px 0 10px; font-size: 14px; line-height: 1.45; color: var(--muted); }
+.about b { color: var(--text); font-size: 16px; }
+.about img { border-radius: 13px; flex: none; }
