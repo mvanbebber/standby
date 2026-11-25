@@ -223,7 +223,7 @@ export function down(e, slot, quick) {
   if (quick && !(tool === 'pen' || tool === 'hl')) tool = 'pen';
   const [x, y] = pos(e, slot);
   const sz = S.settings.size, color = S.settings.color;
-  active = { slot, id: e.pointerId, tool, erased: false };
+  active = { slot, id: e.pointerId, tool, erased: false, quick };
   if (tool === 'pen' || tool === 'hl') {
     const item = { t: tool, c: color, w: (tool === 'pen' ? PEN_W : HL_W)[sz], p: [R(x), R(y)] };
     live = { slot, item }; active.item = item;
@@ -270,9 +270,9 @@ export function up(e) {
     live = null;
     snapshot(slot.sid, slot.page);
     items(slot.sid, slot.page).push(a.item);
-    save(slot.sid); redraw(slot);
+    save(slot.sid); redraw(slot); api.marked?.(a.quick);
   } else if (tool === 'eraser') {
-    if (a.erased) { undoStack.push({ sid: slot.sid, page: slot.page, before: a.before }); redoStack = []; updateBar(); save(slot.sid); }
+    if (a.erased) { undoStack.push({ sid: slot.sid, page: slot.page, before: a.before }); redoStack = []; updateBar(); save(slot.sid); api.marked?.(a.quick); }
   } else if (tool === 'text') {
     api.askText().then(v => {
       if (!v) return;
@@ -282,7 +282,13 @@ export function up(e) {
     });
   }
 }
-export function cancel() { if (active) { live = null; const s = active.slot; active = null; redraw(s); } }
+// Drop the stroke in progress (e.g. a second finger arrived to zoom). An eraser rub is undone too.
+export function cancel() {
+  if (!active) return;
+  const a = active; active = null; live = null;
+  if (a.tool === 'eraser' && a.erased) marks.get(a.slot.sid).pages[a.slot.page] = a.before;
+  redraw(a.slot);
+}
 export const busy = () => !!active;
 
 // ---------- toolbar ----------
@@ -302,7 +308,7 @@ function updateBar() {
 export function setupBar(viewerApi) {
   api = viewerApi;
   $('#colors').innerHTML = COLORS.map(c => `<button data-c="${c}" aria-label="Color"><i style="--c:${c}"></i></button>`).join('');
-  $('#drawBar').addEventListener('click', e => {
+  const onBar = e => {
     const b = e.target.closest('button'); if (!b) return;
     if (b.dataset.tool) {
       if (b.dataset.tool === 'stamp' && S.settings.tool === 'stamp') { toggleStampPicker(); return; }
@@ -315,7 +321,9 @@ export function setupBar(viewerApi) {
     else if (b.id === 'clearBtn') return api.clearPages();
     else return;
     saveSettings(); updateBar();
-  });
+  };
+  $('#drawBar').addEventListener('click', onBar);
+  $('#undoPill').addEventListener('click', e => { onBar(e); api.marked?.(!document.querySelector('#viewer').classList.contains('drawing')); });
   const pk = $('#stampPicker');
   pk.innerHTML = GROUPS.map(([g, ks]) => `<h3>${esc(g)}</h3><div class="row">${ks.map(k =>
     `<button data-st="${k}"><canvas></canvas><span>${esc(STAMPS[k].name)}</span></button>`).join('')}</div>`).join('');

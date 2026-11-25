@@ -79,7 +79,7 @@ export function want(list, keep) {
       if (!e.done) e.prio = i;
       return e.promise;
     }
-    e = { key, id: r.id, p: r.p, bw: r.bw, bh: r.bh, dpr: r.dpr, prio: i, done: false, trim: trimOn };
+    e = { key, id: r.id, p: r.p, bw: r.bw, bh: r.bh, dpr: r.dpr, prio: i, done: false, trim: trimOn, hi: !!r.hi };
     e.promise = new Promise((res, rej) => { e.res = res; e.rej = rej; });
     e.promise.catch(() => {});
     cache.set(key, e);
@@ -120,7 +120,8 @@ async function pump() {
     const cw = v1.width * (crop[2] - crop[0]), ch = v1.height * (crop[3] - crop[1]);
     const fit = Math.min(e.bw / cw, e.bh / ch);
     let px = fit * e.dpr;
-    if (cw * ch * px * px > MAX_PIXELS) px = Math.sqrt(MAX_PIXELS / (cw * ch));
+    const cap = e.hi ? 16e6 : MAX_PIXELS;   // a zoomed-in page may use iOS's largest canvas
+    if (cw * ch * px * px > cap) px = Math.sqrt(cap / (cw * ch));
     const vp = page.getViewport({ scale: px, offsetX: -crop[0] * v1.width * px, offsetY: -crop[1] * v1.height * px });
     canvas = document.createElement('canvas');
     canvas.width = Math.floor(cw * px); canvas.height = Math.floor(ch * px);

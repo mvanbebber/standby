@@ -7,6 +7,9 @@ import * as db from './db.js';
 
 const $ = s => document.querySelector(s);
 const viewer = $('#viewer'), stage = $('#stage');
+// Everything on the page sits in #zoomer, which pinch-zoom scales and pans (transform-origin: top left).
+const zoomer = document.createElement('div'); zoomer.id = 'zoomer'; stage.append(zoomer);
+const Z = { z: 1, tx: 0, ty: 0, key: '' };
 
 const V = { half: false, open: false, ids: [], idx: 0, page: 1, name: '', drawing: false, gen: 0, slots: [], onClose: null };
 const sid = () => V.ids[V.idx];
@@ -51,7 +54,7 @@ export function closeViewer(fromHistory) {
   ink.cancel();
   setDrawing(false);
   viewer.hidden = true;
-  stage.innerHTML = ''; V.slots = [];
+  zoomer.innerHTML = ''; V.slots = []; Z.key = ''; setZoom(1, 0, 0);
   R.want([], []);
   wake(false);
   if (!fromHistory && history.state?.viewer) history.back();
@@ -91,7 +94,7 @@ function makeSlot() {
 
 function attach(slot, e, id, page) {
   e.canvas.style.cssText = '';
-  slot.half = null;
+  slot.half = null; slot.hi = false;
   slot.sid = id; slot.page = page; slot.w = e.cssW; slot.h = e.cssH; slot.key = e.key; slot.crop = e.crop;
   slot.paper.style.width = e.cssW + 'px'; slot.paper.style.height = e.cssH + 'px';
   slot.paper.replaceChildren(e.canvas, slot.ink);
@@ -111,11 +114,13 @@ function show() {
   const g = geom(), s = score(), id = sid(), d = dpr();
   const n = s.pageCount || 1;
   V.page = Math.max(1, Math.min(V.page, n));
+  const zk = `${id}|${V.page}|${V.half}|${g.two}`;   // a new page (or layout) starts unzoomed
+  if (zk !== Z.key) { Z.key = zk; if (Z.z !== 1) setZoom(1, 0, 0); }
   if (V.half) { const t = halfOn() && halfTarget(); if (t) return showHalf(gen, g, d, t); V.half = false; }
   const pages = g.two ? [V.page, V.page + 1 <= n ? V.page + 1 : 0] : [V.page];
 
   stage.classList.toggle('two', g.two);
-  while (V.slots.length < pages.length) { const sl = makeSlot(); V.slots.push(sl); stage.append(sl.el); }
+  while (V.slots.length < pages.length) { const sl = makeSlot(); V.slots.push(sl); zoomer.append(sl.el); }
   while (V.slots.length > pages.length) V.slots.pop().el.remove();
 
   const req = [], keep = [];
@@ -155,7 +160,7 @@ function show() {
 function showHalf(gen, g, d, tgt) {
   const id = sid(), n = score().pageCount || 1;
   stage.classList.remove('two');
-  while (V.slots.length < 1) { const sl = makeSlot(); V.slots.push(sl); stage.append(sl.el); }
+  while (V.slots.length < 1) { const sl = makeSlot(); V.slots.push(sl); zoomer.append(sl.el); }
   while (V.slots.length > 1) V.slots.pop().el.remove();
   const sl = V.slots[0];
   const r = (rid, p) => ({ id: rid, p, bw: g.bw, bh: g.bh, dpr: d });
@@ -202,8 +207,8 @@ function attachHalf(sl, ec, et, tgt) {
     handle.style.top = split + 'px';
   };
   sl.half = {
-    lineY: () => sl.paper.getBoundingClientRect().top + split,
-    drag: clientY => setSplit(clientY - sl.paper.getBoundingClientRect().top),
+    lineY: () => sl.paper.getBoundingClientRect().top + split * Z.z,
+    drag: clientY => setSplit((clientY - sl.paper.getBoundingClientRect().top) / Z.z),
     on: v => handle.classList.toggle('drag', v),
     save: () => { (sc.splits ||= {})[page] = Math.round(split / H * 1000) / 1000; db.put('scores', sc); },
   };
@@ -314,9 +319,71 @@ window.addEventListener('pointercancel', splitEnd);
 window.addEventListener('touchmove', e => { if (splitDrag) { e.preventDefault(); splitDrag.h.drag(e.touches[0].clientY); } }, { passive: false });
 window.addEventListener('touchend', e => { if (splitDrag && !e.touches.length) splitEnd({ pointerId: splitDrag.id }); });
 
-let gesture = null;
+// ---------- zoom ----------
+function setZoom(z, tx, ty, animate) {
+  Z.z = z; Z.tx = tx; Z.ty = ty;
+  zoomer.style.transition = animate ? 'transform .2s ease' : '';
+  zoomer.style.transform = z === 1 && !tx && !ty ? '' : `translate(${tx}px, ${ty}px) scale(${z})`;
+  viewer.classList.toggle('zoomed', z > 1.001);
+}
+function clampPan() {
+  const W = stage.clientWidth, H = stage.clientHeight;
+  Z.tx = Math.min(0, Math.max(W - W * Z.z, Z.tx));
+  Z.ty = Math.min(0, Math.max(H - H * Z.z, Z.ty));
+}
+function resetZoom() { setZoom(1, 0, 0, true); sharpen(); }
+// Zoomed in, the page is drawn again at the higher resolution so the music stays crisp.
+let sharpT;
+function sharpen() {
+  clearTimeout(sharpT);
+  sharpT = setTimeout(() => {
+    if (!V.open || V.half) return;
+    const q = Math.min(Z.z, 3);
+    if (q <= 1.15) { if (V.slots.some(sl => sl.hi)) show(); return; }
+    const g = geom(), d = dpr(), gen = V.gen;
+    const slots = V.slots.filter(sl => sl.w);
+    const list = slots.map(sl => ({ id: sl.sid, p: sl.page, bw: g.bw, bh: g.bh, dpr: Math.round(d * q * 4) / 4, hi: true }));
+    const keep = list.map(r => R.keyOf(r.id, r.p, r.bw, r.bh, r.dpr)).concat(slots.map(sl => sl.key));
+    R.want(list, keep).forEach((pr, i) => pr.then(e => {
+      if (gen !== V.gen || !V.open || Z.z <= 1.15) return;
+      attach(slots[i], e, list[i].id, list[i].p); slots[i].hi = true;
+    }).catch(() => {}));
+  }, 150);
+}
+const zoomHint = () => { if (!S.settings.zoomHint) { S.settings.zoomHint = true; saveSettings(); ui.toast('Zoomed in: drag to look around. Tap “Fit page” to go back.', 3500); } };
+
+// ---------- touches ----------
+// Two fingers: pinch to zoom, move to scroll (in Draw mode too: one finger or the Pencil draws).
+// Zoomed in: one finger drags the page around; a quick tap still turns the page.
+const pts = new Map();
+let pinch = null, pan = null, swallow = false, gesture = null, zraf = 0;
+const local = e => { const r = stage.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
+function startPinch() {
+  ink.cancel(); gesture = null; pan = null;
+  if (splitDrag) splitEnd({ pointerId: splitDrag.id });
+  const [a, b] = [...pts.values()];
+  pinch = { d0: Math.hypot(a.x - b.x, a.y - b.y) || 1, mx0: (a.x + b.x) / 2, my0: (a.y + b.y) / 2, z0: Z.z, tx0: Z.tx, ty0: Z.ty };
+}
+function movePinch() {
+  const [a, b] = [...pts.values()];
+  const d = Math.hypot(a.x - b.x, a.y - b.y), mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+  const z = Math.max(0.8, Math.min(5, pinch.z0 * d / pinch.d0));
+  const cx = (pinch.mx0 - pinch.tx0) / pinch.z0, cy = (pinch.my0 - pinch.ty0) / pinch.z0;   // page point under the fingers
+  Z.z = z; Z.tx = mx - cx * z; Z.ty = my - cy * z;
+  if (!zraf) zraf = requestAnimationFrame(() => { zraf = 0; setZoom(Z.z, Z.tx, Z.ty); });
+}
+function endPinch() {
+  pinch = null;
+  cancelAnimationFrame(zraf); zraf = 0;
+  if (Z.z < 1.05) return resetZoom();
+  clampPan(); setZoom(Z.z, Z.tx, Z.ty, true); sharpen(); zoomHint();
+}
+
 stage.addEventListener('pointerdown', e => {
   if (!V.open) return;
+  if (e.pointerType === 'touch') pts.set(e.pointerId, local(e));
+  if (e.pointerType === 'touch' && pts.size === 2) { startPinch(); return; }
+  if (pinch || swallow || pts.size > 2) return;
   if (startSplitDrag(e)) { e.preventDefault(); gesture = null; return; }
   const pencil = e.pointerType === 'pen' && S.settings.pencilDraws;
   if (V.drawing || pencil) {
@@ -327,21 +394,56 @@ stage.addEventListener('pointerdown', e => {
   }
   if (!e.isPrimary) { gesture = null; return; }
   gesture = { x: e.clientX, y: e.clientY, id: e.pointerId, t: performance.now() };
+  pan = Z.z > 1.001 ? { id: e.pointerId, x0: e.clientX, y0: e.clientY, tx0: Z.tx, ty0: Z.ty, moved: false } : null;
 });
-stage.addEventListener('pointermove', e => { if (ink.busy()) ink.move(e); });
+stage.addEventListener('pointermove', e => {
+  if (pts.has(e.pointerId)) pts.set(e.pointerId, local(e));
+  if (pinch && pts.size >= 2) { movePinch(); return; }
+  if (ink.busy()) { ink.move(e); return; }
+  if (pan && e.pointerId === pan.id) {
+    const dx = e.clientX - pan.x0, dy = e.clientY - pan.y0;
+    if (Math.hypot(dx, dy) > 8) pan.moved = true;
+    Z.tx = pan.tx0 + dx; Z.ty = pan.ty0 + dy; clampPan(); setZoom(Z.z, Z.tx, Z.ty);
+  }
+});
+const lift = e => {
+  pts.delete(e.pointerId);
+  if (pinch) { if (pts.size < 2) { endPinch(); swallow = pts.size > 0; } return true; }
+  if (swallow) { if (!pts.size) swallow = false; return true; }
+  return false;
+};
 stage.addEventListener('pointerup', e => {
+  if (lift(e)) return;
   if (ink.busy()) { ink.up(e); return; }
   if (splitDrag) return;
   if (!gesture || e.pointerId !== gesture.id) return;
   const dx = e.clientX - gesture.x, dy = e.clientY - gesture.y; gesture = null;
-  if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy) * 1.2) return dx < 0 ? next() : prev();
+  if (pan) { const moved = pan.moved; pan = null; if (moved) return; }
+  else if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy) * 1.2) return dx < 0 ? next() : prev();
   if (Math.hypot(dx, dy) > 14) return;
-  const W = stage.clientWidth, H = stage.clientHeight;
-  if (e.clientY < H * 0.14) return showBars(viewer.classList.contains('bars-off'));
+  const W = stage.clientWidth, H = stage.clientHeight, p = local(e);
+  if (p.y < H * 0.14) return showBars(viewer.classList.contains('bars-off'));
   const back = S.settings.backZone === 'half' ? 0.5 : 0.33;
-  if (e.clientX < W * back) prev(); else next();
+  if (p.x < W * back) prev(); else next();
 });
-stage.addEventListener('pointercancel', () => { ink.cancel(); gesture = null; });
+stage.addEventListener('pointercancel', e => { lift(e); ink.cancel(); gesture = null; pan = null; });
+// Trackpad/mouse on a computer: pinch (or Ctrl + scroll) zooms, scrolling moves a zoomed page.
+stage.addEventListener('wheel', e => {
+  if (!V.open) return;
+  e.preventDefault();
+  const p = local(e);
+  if (e.ctrlKey) {
+    const z = Math.max(1, Math.min(5, Z.z * Math.exp(-e.deltaY / 200)));
+    const cx = (p.x - Z.tx) / Z.z, cy = (p.y - Z.ty) / Z.z;
+    Z.z = z; Z.tx = p.x - cx * z; Z.ty = p.y - cy * z;
+  } else if (Z.z > 1.001) { Z.tx -= e.deltaX; Z.ty -= e.deltaY; }
+  else return;
+  clampPan(); setZoom(Z.z, Z.tx, Z.ty); sharpen();
+}, { passive: false });
+// iPad Safari's own page zoom would fight ours.
+['gesturestart', 'gesturechange'].forEach(t => document.addEventListener(t, e => { if (V.open) e.preventDefault(); }));
+$('#zoomFit').onclick = () => resetZoom();
+
 stage.addEventListener('contextmenu', e => e.preventDefault());
 
 document.addEventListener('keydown', e => {
@@ -385,8 +487,15 @@ $('#vSongs').onclick = async () => {
   if (i !== null) { goTo(i); showBars(false); }
 };
 
+let quickT;
 ink.setupBar({
   refresh: refreshInk,
+  // After writing with the Pencil outside Draw mode, Undo/Redo show for a few seconds.
+  marked(quick) {
+    if (!quick || V.drawing) return;
+    viewer.classList.add('quickundo');
+    clearTimeout(quickT); quickT = setTimeout(() => viewer.classList.remove('quickundo'), 6000);
+  },
   askText: () => ui.ask('Add text', '', 'e.g. Repeat 2x, Solo, Watch drummer', 'Add'),
   async clearPages() {
     const vis = V.slots.filter(sl => sl.w && ink.hasMarks(sl.sid, sl.page));

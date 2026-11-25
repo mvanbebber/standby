@@ -295,3 +295,17 @@ svg .fill { fill: currentColor; }
 .about { display: flex; gap: 14px; align-items: center; margin: 8px 0 10px; font-size: 14px; line-height: 1.45; color: var(--muted); }
 .about b { color: var(--text); font-size: 16px; }
 .about img { border-radius: 13px; flex: none; }
+
+/* Pinch zoom */
+#zoomer { position: absolute; inset: 0; display: flex; justify-content: center; align-items: center; transform-origin: 0 0; will-change: transform; }
+#zoomFit { display: none; position: absolute; z-index: 6; top: calc(12px + var(--sat)); left: calc(12px + var(--sal)); background: var(--float); color: var(--text); border: 1px solid var(--line); box-shadow: 0 6px 20px rgba(0,0,0,.35); }
+#viewer.zoomed #zoomFit { display: inline-flex; }
+#viewer.zoomed:not(.bars-off) #zoomFit { top: calc(70px + var(--sat)); }
+#viewer.drawing.zoomed #zoomFit { top: calc(60px + var(--sat)); }
+/* Undo / Redo: floating while drawing, and for a few seconds after a Pencil mark */
+#undoPill { display: none; position: absolute; z-index: 6; top: calc(12px + var(--sat)); right: calc(12px + var(--sar)); gap: 2px; padding: 4px; background: var(--float); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 6px 20px rgba(0,0,0,.35); }
+#viewer.drawing #undoPill, #viewer.quickundo #undoPill { display: flex; }
+#viewer:not(.bars-off) #undoPill { top: calc(70px + var(--sat)); }
+#undoPill button { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-width: 64px; height: 56px; border-radius: 10px; font-size: 12px; font-weight: 600; color: var(--tool-fg); }
+#undoPill button:active { background: var(--panel2); }
+#undoPill button:disabled { opacity: .35; }
