@@ -41,7 +41,7 @@
   --danger: #c62828;
   --ok: #2e9e5b;
   --on-bg: #fbe3b4;
-  --stage: #dcd9d2;
+  --stage: #ffffff;           /* white around the page, like paper */
   --bar: rgba(251,250,248,.95);
   --float: rgba(251,250,248,.98);
   --tool-fg: #3d4047;
