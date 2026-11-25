@@ -9,7 +9,7 @@ import { writeZip, readZip } from './zip.js';
 import * as fsc from './forscore.js';
 
 // Keep in step with VERSION in sw.js (shown in Settings).
-const APP_VERSION = '2026.11.24.11';
+const APP_VERSION = '2026.11.25';
 const COPYRIGHT_YEAR = 2026;
 const $ = s => document.querySelector(s);
 const content = $('#content');
@@ -734,6 +734,8 @@ async function openSettings() {
   const sw = (k, label, help) => `<div class="setting"><div class="txt">${label}${help ? `<small>${help}</small>` : ''}</div>
     <button class="switch${S.settings[k] ? ' on' : ''}" data-k="${k}" role="switch" aria-checked="${!!S.settings[k]}"></button></div>`;
   const sh = ui.openSheet(`<h2>Settings</h2>
+    <div class="setting"><div class="txt">Appearance<small>Light is easier to see in daylight and outdoors. Pages always stay white unless Night pages is on.</small></div>
+      <div class="seg" id="themeSeg"><button data-v="dark">Dark</button><button data-v="light">Light</button></div></div>
     <div class="setting"><div class="txt">Tap to go back<small>How much of the left side turns back a page. The rest turns forward.</small></div>
       <div class="seg" id="backZone"><button data-v="third">Left third</button><button data-v="half">Left half</button></div></div>
     ${sw('twoUp', 'Two pages side by side', 'When the iPad is sideways.')}
@@ -759,6 +761,10 @@ async function openSettings() {
     </div>
     <p style="font-size:13px">Updates install by themselves when you're online. PDF rendering by PDF.js (Mozilla, Apache License 2.0).</p>
     <div class="sheet-actions"><button class="btn accent" data-x>Done</button></div>`);
+  const tseg = sh.el.querySelector('#themeSeg');
+  const paintT = () => tseg.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.v === S.settings.theme));
+  paintT();
+  tseg.onclick = e => { const b = e.target.closest('button'); if (!b) return; S.settings.theme = b.dataset.v; saveSettings(); applyTheme(); paintT(); };
   const seg = sh.el.querySelector('#backZone');
   const paintSeg = () => seg.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.v === S.settings.backZone));
   paintSeg();
@@ -859,10 +865,21 @@ function setupUpdates() {
   document.getElementById('sheetWrap').addEventListener('click', () => { if (pending) setTimeout(reloadWhenFree, 300); });
 }
 
+// ---------- appearance ----------
+// Dark is the default; light is for daylight. Also kept in localStorage so the tiny script in <head>
+// can apply it before the page draws (no flash of the wrong colors).
+function applyTheme() {
+  const light = S.settings.theme === 'light';
+  document.documentElement.dataset.theme = light ? 'light' : 'dark';
+  document.querySelector('meta[name="theme-color"]').content = light ? '#f3f1ed' : '#121417';
+  try { localStorage.setItem('ns-theme', light ? 'light' : 'dark'); } catch {}
+}
+
 // ---------- start ----------
 (async function start() {
   await load();
   R.setTrim(S.settings.trim);
+  applyTheme();
   $('#sort').value = S.settings.sort;
   const have = new Set(await db.keys('thumbs'));
   await Promise.all([...have].map(async id => {

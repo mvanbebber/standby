@@ -9,6 +9,16 @@
   --accent-ink: #1b1300;
   --danger: #ff5c5c;
   --ok: #46c37b;
+  --accent-text: #f5a524;      /* accent used as text/icon color on panels */
+  --on-bg: #3a3220;            /* selected toggle/tool background */
+  --stage: #000;               /* around the music in the reader */
+  --bar: rgba(22,24,28,.94);   /* reader top/bottom bars */
+  --float: rgba(26,29,34,.97); /* floating panels: draw bar, stamps, hints */
+  --tool-fg: #c9ced6;
+  --switch-off: #3a3f47;
+  --seg-on: #444a54;
+  --toast-bg: #f0f0f2;
+  --toast-fg: #111;
   --radius: 12px;
   --side: 260px;
   --sat: env(safe-area-inset-top, 0px);
@@ -17,6 +27,33 @@
   --sar: env(safe-area-inset-right, 0px);
   color-scheme: dark;
 }
+/* Light mode for daytime and outdoor shows (Settings › Appearance). Dark is the default. */
+:root[data-theme="light"] {
+  --bg: #f3f1ed;
+  --panel: #fbfaf8;
+  --panel2: #e9e6e0;
+  --line: #d8d4cc;
+  --text: #1c1d20;
+  --muted: #62666d;
+  --accent: #f0a020;
+  --accent-ink: #1b1300;
+  --accent-text: #9a5600;
+  --danger: #c62828;
+  --ok: #2e9e5b;
+  --on-bg: #fbe3b4;
+  --stage: #dcd9d2;
+  --bar: rgba(251,250,248,.95);
+  --float: rgba(251,250,248,.98);
+  --tool-fg: #3d4047;
+  --switch-off: #c4c0b8;
+  --seg-on: #ffffff;
+  --toast-bg: #1c1d20;
+  --toast-fg: #fff;
+  color-scheme: light;
+}
+/* iPad shows the clock and battery in white over the app; keep a dark strip behind them in light mode. */
+#sbShade { display: none; }
+:root[data-theme="light"] #sbShade { display: block; position: fixed; top: 0; left: 0; right: 0; height: var(--sat); background: #1c1d20; z-index: 100; pointer-events: none; }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); overflow: hidden; overscroll-behavior: none; }
 body { font: 16px/1.35 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, system-ui, sans-serif; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; -webkit-text-size-adjust: 100%; }
@@ -34,10 +71,10 @@ svg .fill { fill: currentColor; }
 .btn.accent { background: var(--accent); color: var(--accent-ink); }
 .btn.danger { color: var(--danger); }
 .btn.big { min-height: 52px; padding: 0 20px; font-size: 17px; }
-.btn.toggle.on { background: #3a3220; color: var(--accent); }
+.btn.toggle.on { background: var(--on-bg); color: var(--accent-text); }
 .icon-btn { display: inline-grid; place-items: center; width: 44px; height: 44px; border-radius: 10px; }
 .icon-btn:active { background: var(--panel2); }
-.mini { display: inline-flex; align-items: center; gap: 3px; font-size: 14px; font-weight: 600; color: var(--accent); padding: 8px 6px; }
+.mini { display: inline-flex; align-items: center; gap: 3px; font-size: 14px; font-weight: 600; color: var(--accent-text); padding: 8px 6px; }
 .mini svg { width: 16px; height: 16px; stroke-width: 2.4; }
 
 /* Layout */
@@ -51,7 +88,7 @@ svg .fill { fill: currentColor; }
 .nav em { font-style: normal; color: var(--muted); font-size: 14px; }
 .nav svg { color: var(--muted); }
 .nav.on { background: var(--panel2); }
-.nav.on svg { color: var(--accent); }
+.nav.on svg { color: var(--accent-text); }
 .nav.drop-target { outline: 2px solid var(--accent); }
 .side-head { display: flex; align-items: center; justify-content: space-between; margin: 18px 4px 4px 12px; font-size: 13px; font-weight: 700; letter-spacing: .6px; text-transform: uppercase; color: var(--muted); }
 .side-empty { color: var(--muted); font-size: 14px; padding: 4px 12px 8px; }
@@ -128,31 +165,31 @@ svg .fill { fill: currentColor; }
 .pick .info { flex: 1; min-width: 0; }
 .pick .info b { display: block; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pick .info span { color: var(--muted); font-size: 13px; }
-.pick .state { width: 32px; height: 32px; border-radius: 16px; display: grid; place-items: center; background: var(--panel2); color: var(--accent); }
+.pick .state { width: 32px; height: 32px; border-radius: 16px; display: grid; place-items: center; background: var(--panel2); color: var(--accent-text); }
 .pick.in .state { background: var(--accent); color: var(--accent-ink); }
 .pick .state svg { stroke-width: 2.6; width: 18px; height: 18px; }
 .setting { display: flex; align-items: center; gap: 14px; padding: 12px 0; border-bottom: 1px solid var(--line); }
 .setting .txt { flex: 1; }
 .setting .txt small { display: block; color: var(--muted); font-size: 13px; }
-.switch { position: relative; width: 52px; height: 32px; border-radius: 16px; background: #3a3f47; flex: none; transition: background .15s; }
+.switch { position: relative; width: 52px; height: 32px; border-radius: 16px; background: var(--switch-off); flex: none; transition: background .15s; }
 .switch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 26px; height: 26px; border-radius: 13px; background: #fff; transition: transform .15s; }
 .switch.on { background: var(--ok); }
 .switch.on::after { transform: translateX(20px); }
 .seg { display: inline-flex; background: var(--panel2); border-radius: 10px; padding: 3px; }
 .seg button { min-height: 38px; padding: 0 12px; border-radius: 8px; font-size: 14px; font-weight: 600; color: var(--muted); }
-.seg button.on { background: #444a54; color: var(--text); }
+.seg button.on { background: var(--seg-on); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,.15); }
 .sheet-section { margin-top: 22px; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); }
 
 #selectBar { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(16px + var(--sab)); z-index: 30; display: flex; align-items: center; gap: 6px; background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 8px; box-shadow: 0 10px 40px rgba(0,0,0,.6); max-width: calc(100vw - 24px); overflow-x: auto; }
 #selCount { padding: 0 10px; font-weight: 700; white-space: nowrap; }
 
-#toast { position: fixed; left: 50%; bottom: calc(26px + var(--sab)); transform: translate(-50%, 30px); opacity: 0; pointer-events: none; z-index: 80; background: #f0f0f2; color: #111; padding: 12px 18px; border-radius: 12px; font-weight: 600; transition: opacity .18s, transform .18s; max-width: 90vw; text-align: center; }
+#toast { position: fixed; left: 50%; bottom: calc(26px + var(--sab)); transform: translate(-50%, 30px); opacity: 0; pointer-events: none; z-index: 80; background: var(--toast-bg); color: var(--toast-fg); padding: 12px 18px; border-radius: 12px; font-weight: 600; transition: opacity .18s, transform .18s; max-width: 90vw; text-align: center; }
 #toast.show { opacity: 1; transform: translate(-50%, 0); }
 #dropHint { position: fixed; inset: 0; z-index: 90; background: rgba(245,165,36,.18); border: 4px dashed var(--accent); display: grid; place-items: center; font-size: 28px; font-weight: 800; pointer-events: none; }
 #dropHint div { background: var(--panel); padding: 20px 30px; border-radius: 16px; }
 
 /* Viewer */
-#viewer { position: fixed; inset: 0; z-index: 40; background: #000; touch-action: none; }
+#viewer { position: fixed; inset: 0; z-index: 40; background: var(--stage); touch-action: none; }
 #stage { position: absolute; top: var(--sat); bottom: var(--sab); left: var(--sal); right: var(--sar); display: flex; justify-content: center; align-items: center; touch-action: none; }
 .slot { flex: 1; height: 100%; display: flex; align-items: center; justify-content: center; min-width: 0; }
 .two .slot:first-child { justify-content: flex-end; }
@@ -162,7 +199,7 @@ svg .fill { fill: currentColor; }
 .paper .spin { position: absolute; inset: 0; display: grid; place-items: center; color: #999; font-size: 14px; }
 .night .paper { filter: invert(1) hue-rotate(180deg) brightness(.92); }
 #viewer.drawing .paper { box-shadow: 0 0 0 2px var(--accent); }
-.vbar { position: absolute; left: 0; right: 0; z-index: 3; display: flex; align-items: center; gap: 8px; background: rgba(22,24,28,.94); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); transition: transform .18s ease, opacity .18s; }
+.vbar { position: absolute; left: 0; right: 0; z-index: 3; display: flex; align-items: center; gap: 8px; background: var(--bar); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); transition: transform .18s ease, opacity .18s; }
 #vTop { top: 0; padding: calc(6px + var(--sat)) calc(10px + var(--sar)) 6px calc(10px + var(--sal)); border-bottom: 1px solid var(--line); }
 #vBottom { bottom: 0; padding: 8px calc(18px + var(--sar)) calc(8px + var(--sab)) calc(18px + var(--sal)); border-top: 1px solid var(--line); }
 #viewer.bars-off #vTop { transform: translateY(-105%); opacity: 0; pointer-events: none; }
@@ -182,10 +219,10 @@ svg .fill { fill: currentColor; }
 #edgeFlash.l { left: 0; } #edgeFlash.r { right: 0; }
 #edgeFlash.go { animation: flash .35s ease; }
 
-#drawBar { position: absolute; left: 50%; transform: translateX(-50%); bottom: calc(10px + var(--sab)); z-index: 4; display: flex; align-items: center; gap: 6px; background: rgba(26,29,34,.97); border: 1px solid var(--line); border-radius: 16px; padding: 6px 8px; box-shadow: 0 10px 40px rgba(0,0,0,.6); max-width: calc(100vw - 16px); overflow-x: auto; }
+#drawBar { position: absolute; left: 50%; transform: translateX(-50%); bottom: calc(10px + var(--sab)); z-index: 4; display: flex; align-items: center; gap: 6px; background: var(--float); border: 1px solid var(--line); border-radius: 16px; padding: 6px 8px; box-shadow: 0 10px 40px rgba(0,0,0,.6); max-width: calc(100vw - 16px); overflow-x: auto; }
 #drawBar .tools { display: flex; gap: 2px; }
-#drawBar .tools button { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-width: 62px; height: 58px; border-radius: 10px; font-size: 12px; font-weight: 600; color: #c9ced6; }
-#drawBar .tools button.on { background: #3a3220; color: var(--accent); }
+#drawBar .tools button { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-width: 62px; height: 58px; border-radius: 10px; font-size: 12px; font-weight: 600; color: var(--tool-fg); }
+#drawBar .tools button.on { background: var(--on-bg); color: var(--accent-text); }
 #drawBar .tools button:active { background: var(--panel2); }
 #drawBar .tools button:disabled { opacity: .35; }
 #stampIcon { width: 24px; height: 24px; }
@@ -196,17 +233,17 @@ svg .fill { fill: currentColor; }
 .colors button.on { box-shadow: 0 0 0 2.5px var(--accent); }
 .sizes { display: flex; gap: 2px; }
 .sizes button { width: 40px; height: 44px; display: grid; place-items: center; border-radius: 10px; }
-.sizes button i { width: var(--d); height: var(--d); border-radius: 50%; background: #c9ced6; }
-.sizes button.on { background: #3a3220; }
+.sizes button i { width: var(--d); height: var(--d); border-radius: 50%; background: var(--tool-fg); }
+.sizes button.on { background: var(--on-bg); }
 .sizes button.on i { background: var(--accent); }
 #drawDone { margin-left: 4px; min-height: 52px; padding: 0 22px; }
-#stampPicker { position: absolute; z-index: 5; left: 50%; transform: translateX(-50%); bottom: calc(88px + var(--sab)); width: min(640px, calc(100vw - 16px)); max-height: 62vh; overflow-y: auto; background: rgba(26,29,34,.98); border: 1px solid var(--line); border-radius: 16px; padding: 12px 14px 16px; box-shadow: 0 10px 40px rgba(0,0,0,.6); }
+#stampPicker { position: absolute; z-index: 5; left: 50%; transform: translateX(-50%); bottom: calc(88px + var(--sab)); width: min(640px, calc(100vw - 16px)); max-height: 62vh; overflow-y: auto; background: var(--float); border: 1px solid var(--line); border-radius: 16px; padding: 12px 14px 16px; box-shadow: 0 10px 40px rgba(0,0,0,.6); }
 #stampPicker h3 { margin: 8px 2px 6px; font-size: 12px; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); }
 #stampPicker .row { display: flex; flex-wrap: wrap; gap: 6px; }
 #stampPicker button { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 70px; height: 70px; border-radius: 10px; background: #f6f4ef; color: #333; font-size: 11px; gap: 1px; }
 #stampPicker button.on { outline: 3px solid var(--accent); }
 #stampPicker canvas { width: 40px; height: 40px; }
-#drawHint { position: absolute; z-index: 4; top: calc(12px + var(--sat)); left: 50%; transform: translateX(-50%); background: rgba(26,29,34,.94); padding: 10px 16px; border-radius: 12px; font-size: 15px; font-weight: 600; pointer-events: none; white-space: nowrap; }
+#drawHint { position: absolute; z-index: 4; top: calc(12px + var(--sat)); left: 50%; transform: translateX(-50%); background: var(--float); color: var(--text); padding: 10px 16px; border-radius: 12px; font-size: 15px; font-weight: 600; pointer-events: none; white-space: nowrap; }
 #songs .choice.cur { outline: 2px solid var(--accent); }
 #songs .choice .n { width: 24px; color: var(--muted); font-weight: 700; text-align: right; }
 
@@ -237,7 +274,7 @@ svg .fill { fill: currentColor; }
 .lib-row { display: flex; align-items: center; gap: 2px; padding: 0 8px 6px 10px; }
 .lib-switch { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; min-height: 56px; padding: 0 12px; border-radius: 12px; background: var(--panel2); text-align: left; }
 .lib-switch:active { filter: brightness(1.2); }
-.lib-switch > svg:first-child { color: var(--accent); }
+.lib-switch > svg:first-child { color: var(--accent-text); }
 .lib-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .lib-txt small { font-size: 11px; font-weight: 700; letter-spacing: .6px; text-transform: uppercase; color: var(--muted); }
 .lib-txt b { font-size: 17px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

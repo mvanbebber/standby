@@ -12,6 +12,10 @@
 - Offline: `sw.js` precaches every file. Bump `VERSION` there with every change (and `APP_VERSION` in `js/app.js`,
   shown in Settings › About and under the sidebar with the credit "Developed by Michael Van Bebber" and
   © `COPYRIGHT_YEAR`), and add new files to `FILES`. The app reloads itself on a new version, never while the reader is open.
+- Appearance (Nov 25, 2026): Dark (default) and Light (daytime/outdoor), Settings › Appearance, `S.settings.theme`,
+  mirrored to localStorage `ns-theme` for the `<head>` script. All UI colors are CSS variables in `app.css`
+  (`:root` dark, `:root[data-theme="light"]` light): new colors need both. `#sbShade` keeps a dark strip behind the
+  iPad status bar in light mode (its text is white).
 - Data lives in IndexedDB (`js/db.js`): scores, files, thumbs, marks, setlists, libraries (one per band), kv.
   Old `folders` are migrated into libraries on load (`js/store.js`).
 - Owner's choices (Nov 24, 2026): libraries replace folders (one per band); half-page turns yes; no bookmarks
