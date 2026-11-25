@@ -212,7 +212,10 @@ svg .fill { fill: currentColor; }
 #vPage { font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; min-width: 96px; }
 #vSlider { flex: 1; accent-color: var(--accent); height: 36px; }
 #vHint { color: var(--muted); font-size: 13px; white-space: nowrap; }
-#pullTab { position: absolute; top: calc(4px + var(--sat)); left: 50%; width: 48px; height: 5px; margin-left: -24px; border-radius: 3px; background: rgba(128,128,128,.45); z-index: 2; pointer-events: none; }
+#pullTab { position: absolute; top: calc(6px + var(--sat)); left: 50%; transform: translateX(-50%); z-index: 5; display: flex; align-items: center; gap: 5px; height: 30px; padding: 0 12px; border-radius: 15px; background: var(--float); color: var(--muted); border: 1px solid var(--line); font-size: 12px; font-weight: 700; opacity: .8; box-shadow: 0 2px 8px rgba(0,0,0,.2); }
+#pullTab svg { width: 15px; height: 15px; }
+#pullTab::before { content: ''; position: absolute; inset: -10px -14px; }   /* bigger touch area */
+#viewer.drawing #pullTab { display: none; }
 #viewer:not(.bars-off) #pullTab { display: none; }
 #nextBadge { position: absolute; right: calc(12px + var(--sar)); bottom: calc(12px + var(--sab)); z-index: 2; background: rgba(22,24,28,.88); color: #fff; padding: 8px 14px; border-radius: 10px; font-size: 14px; font-weight: 600; pointer-events: none; max-width: 46vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 #viewer:not(.bars-off) #nextBadge { bottom: calc(68px + var(--sab)); }

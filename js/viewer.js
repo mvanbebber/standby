@@ -356,7 +356,7 @@ const zoomHint = () => { if (!S.settings.zoomHint) { S.settings.zoomHint = true;
 // Two fingers: pinch to zoom, move to scroll (in Draw mode too: one finger or the Pencil draws).
 // Zoomed in: one finger drags the page around; a quick tap still turns the page.
 const pts = new Map();
-let pinch = null, pan = null, swallow = false, gesture = null, zraf = 0;
+let pinch = null, pan = null, swallow = false, gesture = null, zraf = 0, penTap = null;
 const local = e => { const r = stage.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
 function startPinch() {
   ink.cancel(); gesture = null; pan = null;
@@ -389,7 +389,11 @@ stage.addEventListener('pointerdown', e => {
   if (V.drawing || pencil) {
     ink.toggleStampPicker(false);
     const sl = slotAt(e);
-    if (sl) { ink.down(e, sl, !V.drawing); try { stage.setPointerCapture(e.pointerId); } catch {} return; }
+    if (sl) {
+      ink.down(e, sl, !V.drawing); try { stage.setPointerCapture(e.pointerId); } catch {}
+      if (!V.drawing) penTap = { id: e.pointerId, x: e.clientX, y: e.clientY, t: performance.now() };
+      return;
+    }
     if (V.drawing) return;
   }
   if (!e.isPrimary) { gesture = null; return; }
@@ -414,6 +418,13 @@ const lift = e => {
 };
 stage.addEventListener('pointerup', e => {
   if (lift(e)) return;
+  // Outside Draw mode, a quick Pencil tap that doesn't move is a tap (menu, page turn), not a dot.
+  if (penTap && e.pointerId === penTap.id) {
+    const t = penTap; penTap = null;
+    if (Math.hypot(e.clientX - t.x, e.clientY - t.y) < 6 && performance.now() - t.t < 350) {
+      ink.cancel(); gesture = { x: t.x, y: t.y, id: e.pointerId };
+    }
+  }
   if (ink.busy()) { ink.up(e); return; }
   if (splitDrag) return;
   if (!gesture || e.pointerId !== gesture.id) return;
@@ -460,7 +471,8 @@ window.addEventListener('resize', () => { if (!V.open) return; clearTimeout(resi
 
 $('#vClose').onclick = () => closeViewer();
 $('#vDraw').onclick = () => setDrawing(true);
-$('#drawDone').onclick = () => setDrawing(false);
+$('#drawDone').onclick = () => { setDrawing(false); showBars(true); };   // Library is one tap away again
+$('#pullTab').onclick = () => showBars(true);
 $('#dPrev').onclick = () => prev();
 $('#dNext').onclick = () => next();
 $('#vNight').onclick = () => { S.settings.night = !S.settings.night; viewer.classList.toggle('night', S.settings.night); saveSettings(); updateChrome(V.slots.filter(s => s.page).map(s => s.page)); };
