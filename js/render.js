@@ -170,14 +170,14 @@ export async function makeThumb(bytes, width = 360) {
 // ---------- margin trimming ----------
 // Each page's printed area, as [left, top, right, bottom] fractions of the page, found from a small render.
 // A row or column counts as printed only with a real amount of ink on two neighboring lines, so specks and
-// scanner dust don't. Saved per score in kv "crop3:<id>", worked out in the background after import.
+// scanner dust don't. Saved per score in kv "crop4:<id>", worked out in the background after import.
 export const FULL = [0, 0, 1, 1];
 const crops = new Map();   // id -> {pages, ready, timer}
 function cropsFor(id) {
   let c = crops.get(id);
   if (!c) {
     c = { pages: {} };
-    c.ready = db.get('kv', 'crop3:' + id).then(r => { if (r) Object.assign(c.pages, r.v); }).catch(() => {});
+    c.ready = db.get('kv', 'crop4:' + id).then(r => { if (r) Object.assign(c.pages, r.v); }).catch(() => {});
     crops.set(id, c);
   }
   return c;
@@ -185,9 +185,9 @@ function cropsFor(id) {
 function saveCrops(id) {
   const c = crops.get(id);
   clearTimeout(c.timer);
-  c.timer = setTimeout(() => db.put('kv', { k: 'crop3:' + id, v: c.pages }), 500);
+  c.timer = setTimeout(() => db.put('kv', { k: 'crop4:' + id, v: c.pages }), 500);
 }
-export function forgetCrops(id) { crops.delete(id); db.del('kv', 'crop3:' + id).catch(() => {}); }
+export function forgetCrops(id) { crops.delete(id); db.del('kv', 'crop4:' + id).catch(() => {}); }
 async function cropOf(id, n, page) {
   const c = cropsFor(id); await c.ready;
   if (!c.pages[n]) { c.pages[n] = await detectCrop(page); saveCrops(id); }
@@ -226,35 +226,25 @@ export async function detectCrop(page) {
   return [r(x0 / W), r(y0 / H), r((x1 + 1) / W), r((y1 + 1) / H), r(c0 / H), r((c1 + 1) / H)];
 }
 
-// Which part of the page to show, given the printed area. Width comes first (like forScore):
+// Which part of the page to show, given the printed area. Like forScore, width first and as big as possible:
 //  1. everything fits at full width: show it all;
-//  2. only sparse bits at the edges don't fit: full width, starting from the top, the core always on screen;
-//  3. otherwise music would be cut off: shrink just enough to show all of it.
-// Never smaller than the untrimmed page.
-const PAD = 0.015, CORE_MARGIN = 0.022;   // core margin: room for ledger-line notes and dynamics near a staff
+//  2. only sparse bits at the edges don't fit: full width, from the top, the music "core" always on screen;
+//  3. even the core doesn't fit at full width: as big as the core allows (sparse edge bits may run off).
+// The core = staves, titles, groups of notes, plus a little room for low notes. Never smaller than the whole page.
+const PAD = 0.015, CORE_MARGIN = 0.012;
 function viewRect(c, v1, bw, bh) {
   if (c === FULL || (c[0] === 0 && c[1] === 0 && c[2] === 1 && c[3] === 1)) return FULL;
   const pw = v1.width, ph = v1.height;
   const x0 = Math.max(0, c[0] - PAD), x1 = Math.min(1, c[2] + PAD);
   const top = Math.max(0, c[1] - PAD), bot = Math.min(1, c[3] + PAD);
   const coreTop = Math.max(top, (c[4] ?? c[1]) - CORE_MARGIN), coreBot = Math.min(bot, (c[5] ?? c[3]) + CORE_MARGIN);
-  let fit = pw * (x1 - x0) ? bw / (pw * (x1 - x0)) : 1;
-  const V = bh / fit / ph;                       // page height visible at full width
-  let y0, y1;
-  if (V >= bot - top) { y0 = top; y1 = bot; }
-  else if (V >= coreBot - coreTop) {
-    y0 = top;
-    if (y0 + V < coreBot) y0 = coreBot - V;
-    y1 = y0 + V;
-  } else {
-    fit = Math.min(bw / (pw * (x1 - x0)), bh / (ph * (c[3] - c[1])));
-    const visH = Math.min(bot - top, bh / fit / ph);
-    y0 = Math.max(0, Math.min(1 - visH, (c[1] + c[3]) / 2 - visH / 2));
-    if (y0 > c[1]) y0 = c[1];
-    y1 = Math.min(1, y0 + visH);
-  }
-  if (fit <= Math.min(bw / pw, bh / ph) * 1.02) return FULL;   // trimming wouldn't make the music bigger
-  return [x0, y0, x1, y1];
+  const fitW = bw / (pw * (x1 - x0));
+  const fit = Math.min(fitW, bh / (ph * Math.min(bot - top, Math.max(coreBot - coreTop, bh / fitW / ph))));
+  const visH = Math.min(bot - top, bh / fit / ph);
+  let y0 = top;                                   // start from the top of the page's printing
+  if (y0 + visH < coreBot) y0 = coreBot - visH;   // ...but never cut off the bottom of the music
+  if (fit <= Math.min(bw / pw, bh / ph) * 1.01) return FULL;   // trimming wouldn't make the music bigger
+  return [x0, y0, x1, Math.min(1, y0 + visH)];
 }
 
 // Work out every page's crop ahead of time, only while nothing else is rendering.

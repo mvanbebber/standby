@@ -190,7 +190,8 @@ svg .fill { fill: currentColor; }
 
 /* Viewer */
 #viewer { position: fixed; inset: 0; z-index: 40; background: var(--stage); touch-action: none; }
-#stage { position: absolute; top: var(--sat); bottom: var(--sab); left: var(--sal); right: var(--sar); display: flex; justify-content: center; align-items: center; touch-action: none; }
+#stage { position: absolute; top: var(--sat); bottom: 0; left: var(--sal); right: var(--sar);   /* music may run under the home bar, like forScore */
+  display: flex; justify-content: center; align-items: center; touch-action: none; }
 .slot { flex: 1; height: 100%; display: flex; align-items: center; justify-content: center; min-width: 0; }
 .two .slot:first-child { justify-content: flex-end; }
 .two .slot:last-child { justify-content: flex-start; }
