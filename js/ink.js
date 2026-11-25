@@ -44,7 +44,7 @@ export const STAMPS = {
   } },
   vs: { name: 'V.S.', draw: txt('V.S.', 'bold', 46) },
   rit: { name: 'rit.', draw: txt('rit.', 'italic', 56) },
-  atempo: { name: 'a tempo', wide: 1.6, draw: txt('a tempo', 'italic', 40) },
+  atempo: { name: 'a tempo', wide: 1.3, draw: txt('a tempo', 'italic', 50) },
   cut: { name: 'Cut', draw: c => { c.lineWidth = 6; line(c, -30, -30, 30, 30); line(c, 30, -30, -30, 30); c.beginPath(); c.arc(0, 0, 44, 0, Math.PI * 2); c.stroke(); } },
   arrow: { name: 'Arrow', draw: c => { c.lineWidth = 7; line(c, -44, 0, 40, 0); line(c, 18, -20, 42, 0, 18, 20); } },
   circle: { name: 'Circle', draw: c => { c.lineWidth = 5; c.beginPath(); c.arc(0, 0, 42, 0, Math.PI * 2); c.stroke(); } },
@@ -53,10 +53,10 @@ export const STAMPS = {
   f3: { name: 'Finger 3', draw: txt('3', 'bold', 64, 'system-ui, sans-serif') }, f4: { name: 'Finger 4', draw: txt('4', 'bold', 64, 'system-ui, sans-serif') },
   f5: { name: 'Finger 5', draw: txt('5', 'bold', 64, 'system-ui, sans-serif') },
 };
-const GROUPS = [
+const GROUPS = [   // order chosen by the owner (Nov 25, 2026): accidentals, fermata & caesura first, then dynamics
+  ['Accidentals, fermata & caesura', ['sharp', 'flat', 'natural', 'fermata', 'caesura']],
   ['Dynamics', ['pp', 'p', 'mp', 'mf', 'f', 'ff', 'sfz', 'fp', 'cresc', 'dim']],
-  ['Articulation', ['accent', 'marcato', 'staccato', 'tenuto', 'fermata', 'breath', 'caesura', 'upbow', 'downbow']],
-  ['Accidentals', ['sharp', 'flat', 'natural']],
+  ['Articulation', ['accent', 'marcato', 'staccato', 'tenuto', 'breath', 'upbow', 'downbow']],
   ['Road map & cues', ['segno', 'coda', 'vs', 'rit', 'atempo', 'glasses', 'cut', 'arrow']],
   ['Shapes & fingering', ['circle', 'box', 'f1', 'f2', 'f3', 'f4', 'f5']],
 ];
