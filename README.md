@@ -39,6 +39,9 @@ bump `VERSION` there with every change. PDF.js 4.10.38 (legacy build, Apache-2.0
 ## Run locally
     python3 -m http.server 8000
 
+## Live
+https://nosheetpro.netlify.app
+
 ## Host it
 Any static host over HTTPS. On Netlify: a new site from this repo, base and publish directory left empty
 (`netlify.toml` sets no build step). On the iPad open the site in Safari, then Share › Add to Home Screen for a full-screen app.

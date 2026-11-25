@@ -22,6 +22,7 @@
   inside scores; native iPad app (Capacitor, for AirDrop "Open in") is on hold.
 - forScore import (`js/forscore.js`): .4sb Archive/Backup and .4ss setlists, based on the reverse-engineered
   format from github.com/inet-cologne/forscore-cleanup. Only tested with synthetic files so far.
-- Hosted on Netlify from this repo (top level, no build). Each deploy uses Netlify credits.
+- Hosted on Netlify from this repo (top level, no build) at https://nosheetpro.netlify.app (project "nosheetpro",
+  renamed Nov 25, 2026 from standby-stage; a different address means a separate library on the iPad). Each deploy uses Netlify credits.
 - Test locally with `python3 -m http.server` and Playwright (Chromium is preinstalled), emulating
   'iPad Pro 11 landscape' and portrait.
